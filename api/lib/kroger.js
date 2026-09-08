@@ -1,76 +1,279 @@
 const crypto = require("crypto");
 
-const API="https://api.kroger.com/v1";
-const TOKEN="https://api.kroger.com/v1/connect/oauth2/token";
-const AUTHORIZE="https://api.kroger.com/v1/connect/oauth2/authorize";
-const SESSION_COOKIE="cb_kroger_session";
-const STATE_COOKIE="cb_kroger_state";
+const API = "https://api.kroger.com/v1";
+const TOKEN = "https://api.kroger.com/v1/connect/oauth2/token";
+const AUTHORIZE = "https://api.kroger.com/v1/connect/oauth2/authorize";
 
-function required(name){
-  const v=process.env[name];
-  if(!v) throw new Error(`Missing Vercel environment variable: ${name}`);
-  return v;
-}
-function redirectUri(req){
-  return process.env.KROGER_REDIRECT_URI || `https://${req.headers.host}/api/auth/kroger/callback`;
-}
-function cookies(req){
-  const out={}; const raw=req.headers.cookie||"";
-  for(const part of raw.split(";")){
-    const i=part.indexOf("="); if(i<0) continue;
-    const k=part.slice(0,i).trim(),v=part.slice(i+1).trim();
-    try{out[k]=decodeURIComponent(v)}catch{out[k]=v}
+function required(name) {
+  const value = process.env[name];
+
+  if (!value) {
+    throw new Error(`Missing environment variable: ${name}`);
   }
-  return out;
+
+  return value;
 }
-function setCookie(name,value,maxAge=2592000){
-  return `${name}=${encodeURIComponent(value)}; Path=/; Max-Age=${maxAge}; HttpOnly; Secure; SameSite=Lax`;
+
+function redirectUri(req) {
+  return (
+    process.env.KROGER_REDIRECT_URI ||
+    `https://${req.headers.host}/api/auth/kroger/callback`
+  );
 }
-function clearCookie(name){return setCookie(name,"",0)}
-function key(){return crypto.createHash("sha256").update(required("SESSION_SECRET")).digest()}
-function encrypt(obj){
-  const iv=crypto.randomBytes(12),c=crypto.createCipheriv("aes-256-gcm",key(),iv);
-  const enc=Buffer.concat([c.update(JSON.stringify(obj)),c.final()]);
-  return Buffer.concat([iv,c.getAuthTag(),enc]).toString("base64url");
+
+function json(res, status, body) {
+  res.statusCode = status;
+  res.setHeader("Content-Type", "application/json");
+  res.end(JSON.stringify(body));
 }
-function decrypt(value){
-  try{
-    const b=Buffer.from(value,"base64url"),iv=b.subarray(0,12),tag=b.subarray(12,28),enc=b.subarray(28);
-    const d=crypto.createDecipheriv("aes-256-gcm",key(),iv);d.setAuthTag(tag);
-    return JSON.parse(Buffer.concat([d.update(enc),d.final()]).toString("utf8"));
-  }catch{return null}
+
+function go(res, url) {
+  res.statusCode = 302;
+  res.setHeader("Location", url);
+  res.end();
 }
-function json(res,status,data,headers={}){
-  res.statusCode=status;Object.entries(headers).forEach(([k,v])=>res.setHeader(k,v));
-  res.setHeader("Content-Type","application/json; charset=utf-8");res.end(JSON.stringify(data));
+
+async function readBody(req) {
+  return new Promise((resolve, reject) => {
+    let body = "";
+
+    req.on("data", chunk => {
+      body += chunk;
+    });
+
+    req.on("end", () => {
+      if (!body) {
+        resolve({});
+        return;
+      }
+
+      try {
+        resolve(JSON.parse(body));
+      } catch {
+        reject(new Error("Invalid JSON body"));
+      }
+    });
+
+    req.on("error", reject);
+  });
 }
-function go(res,url,headers={}){
-  res.statusCode=302;res.setHeader("Location",url);Object.entries(headers).forEach(([k,v])=>res.setHeader(k,v));res.end();
-}
-async function clientToken(){
-  const basic=Buffer.from(`${required("KROGER_CLIENT_ID")}:${required("KROGER_CLIENT_SECRET")}`).toString("base64");
-  const r=await fetch(TOKEN,{method:"POST",headers:{Authorization:`Basic ${basic}`,"Content-Type":"application/x-www-form-urlencoded"},body:new URLSearchParams({grant_type:"client_credentials"})});
-  const d=await r.json().catch(()=>({}));
-  if(!r.ok)throw new Error(d.error_description||d.error||"Kroger client token failed");
-  return d.access_token;
-}
-async function userSession(req,res){
-  const c=cookies(req);let s=c[SESSION_COOKIE]?decrypt(c[SESSION_COOKIE]):null;
-  if(!s)return null;
-  if(s.expires_at && Date.now()>=s.expires_at){
-    if(!s.refresh_token){res.setHeader("Set-Cookie",clearCookie(SESSION_COOKIE));return null}
-    const basic=Buffer.from(`${required("KROGER_CLIENT_ID")}:${required("KROGER_CLIENT_SECRET")}`).toString("base64");
-    const r=await fetch(TOKEN,{method:"POST",headers:{Authorization:`Basic ${basic}`,"Content-Type":"application/x-www-form-urlencoded"},body:new URLSearchParams({grant_type:"refresh_token",refresh_token:s.refresh_token})});
-    const d=await r.json().catch(()=>({}));
-    if(!r.ok||!d.access_token){res.setHeader("Set-Cookie",clearCookie(SESSION_COOKIE));return null}
-    s={...s,access_token:d.access_token,refresh_token:d.refresh_token||s.refresh_token,expires_at:Date.now()+Math.max(60,Number(d.expires_in||1800)-60)*1000};
-    res.setHeader("Set-Cookie",setCookie(SESSION_COOKIE,encrypt(s)));
+
+/*
+ * Get a Kroger application token.
+ *
+ * This is used for public APIs such as:
+ * - Locations
+ * - Products
+ */
+async function clientToken() {
+  const clientId = required("KROGER_CLIENT_ID");
+  const clientSecret = required("KROGER_CLIENT_SECRET");
+
+  const basic = Buffer.from(
+    `${clientId}:${clientSecret}`
+  ).toString("base64");
+
+  const body = new URLSearchParams();
+
+  body.set("grant_type", "client_credentials");
+
+  // Request the scopes configured for this application.
+  body.set(
+    "scope",
+    process.env.KROGER_SCOPES ||
+      "product.compact"
+  );
+
+  const response = await fetch(TOKEN, {
+    method: "POST",
+    headers: {
+      Authorization: `Basic ${basic}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+      Accept: "application/json"
+    },
+    body
+  });
+
+  const text = await response.text();
+
+  let data;
+
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch {
+    throw new Error(
+      `Kroger token endpoint returned invalid JSON: ${text}`
+    );
   }
-  return s;
+
+  if (!response.ok) {
+    console.error("Kroger token error:", data);
+
+    throw new Error(
+      `Kroger token request failed (${response.status}): ${
+        data.error_description ||
+        data.error ||
+        data.reason ||
+        "Unknown error"
+      }`
+    );
+  }
+
+  if (!data.access_token) {
+    throw new Error("Kroger token response did not contain access_token");
+  }
+
+  return data.access_token;
 }
-async function readBody(req){
-  if(req.body && typeof req.body==="object")return req.body;
-  let raw="";for await(const c of req)raw+=c;
-  try{return JSON.parse(raw||"{}")}catch{return {}}
+
+/*
+ * Encrypt the user's Kroger OAuth session.
+ */
+function encryptSession(payload) {
+  const secret = required("SESSION_SECRET");
+
+  const key = crypto
+    .createHash("sha256")
+    .update(secret)
+    .digest();
+
+  const iv = crypto.randomBytes(12);
+
+  const cipher = crypto.createCipheriv(
+    "aes-256-gcm",
+    key,
+    iv
+  );
+
+  const encrypted = Buffer.concat([
+    cipher.update(JSON.stringify(payload), "utf8"),
+    cipher.final()
+  ]);
+
+  const tag = cipher.getAuthTag();
+
+  return [
+    iv.toString("base64url"),
+    tag.toString("base64url"),
+    encrypted.toString("base64url")
+  ].join(".");
 }
-module.exports={API,TOKEN,AUTHORIZE,SESSION_COOKIE,STATE_COOKIE,required,redirectUri,cookies,setCookie,clearCookie,encrypt,decrypt,json,go,clientToken,userSession,readBody};
+
+function decryptSession(value) {
+  if (!value) return null;
+
+  try {
+    const secret = required("SESSION_SECRET");
+
+    const key = crypto
+      .createHash("sha256")
+      .update(secret)
+      .digest();
+
+    const [iv64, tag64, data64] = value.split(".");
+
+    const iv = Buffer.from(iv64, "base64url");
+    const tag = Buffer.from(tag64, "base64url");
+    const encrypted = Buffer.from(data64, "base64url");
+
+    const decipher = crypto.createDecipheriv(
+      "aes-256-gcm",
+      key,
+      iv
+    );
+
+    decipher.setAuthTag(tag);
+
+    const decrypted = Buffer.concat([
+      decipher.update(encrypted),
+      decipher.final()
+    ]);
+
+    return JSON.parse(decrypted.toString("utf8"));
+  } catch (error) {
+    console.error("Session decrypt failed:", error);
+    return null;
+  }
+}
+
+function parseCookies(req) {
+  const header = req.headers.cookie || "";
+
+  const cookies = {};
+
+  header.split(";").forEach(part => {
+    const index = part.indexOf("=");
+
+    if (index === -1) return;
+
+    const key = part.slice(0, index).trim();
+    const value = part.slice(index + 1).trim();
+
+    cookies[key] = decodeURIComponent(value);
+  });
+
+  return cookies;
+}
+
+function setCookie(res, name, value, options = {}) {
+  let cookie =
+    `${name}=${encodeURIComponent(value)}; Path=/;`;
+
+  if (options.httpOnly !== false) {
+    cookie += " HttpOnly;";
+  }
+
+  if (options.secure !== false) {
+    cookie += " Secure;";
+  }
+
+  cookie += " SameSite=Lax;";
+
+  if (options.maxAge !== undefined) {
+    cookie += ` Max-Age=${options.maxAge};`;
+  }
+
+  const existing = res.getHeader("Set-Cookie");
+
+  const cookies = existing
+    ? Array.isArray(existing)
+      ? existing
+      : [existing]
+    : [];
+
+  cookies.push(cookie);
+
+  res.setHeader("Set-Cookie", cookies);
+}
+
+function clearCookie(res, name) {
+  setCookie(res, name, "", {
+    maxAge: 0
+  });
+}
+
+function userSession(req) {
+  const cookies = parseCookies(req);
+
+  return decryptSession(
+    cookies.cb_kroger_session
+  );
+}
+
+module.exports = {
+  API,
+  TOKEN,
+  AUTHORIZE,
+  required,
+  redirectUri,
+  json,
+  go,
+  readBody,
+  clientToken,
+  encryptSession,
+  decryptSession,
+  parseCookies,
+  setCookie,
+  clearCookie,
+  userSession
+};
