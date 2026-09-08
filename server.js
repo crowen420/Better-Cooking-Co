@@ -427,6 +427,11 @@ app.delete("/api/admin/recipes/:id",(req,res)=>{
 
 app.use(express.static(__dirname));
 
-app.listen(PORT,()=>console.log(
-  `Better Cooking Co. running at http://localhost:${PORT}`
-));
+// Run normally on your computer, but export the Express app for Vercel.
+if(require.main===module){
+  app.listen(PORT,()=>console.log(
+    `Cook Better Co. running at http://localhost:${PORT}`
+  ));
+}
+
+module.exports=app;
