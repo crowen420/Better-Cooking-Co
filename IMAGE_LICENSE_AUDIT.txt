@@ -1,0 +1,20 @@
+Cook Better Co. image/source audit
+Last reviewed: September 8, 2026
+
+The current prototype references the following remote image assets from images.unsplash.com:
+
+https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&w=900&q=85
+https://images.unsplash.com/photo-1498837167922-ddd27525d352?auto=format&fit=crop&w=300&q=80
+https://images.unsplash.com/photo-1527477396000-e27163b481c2?auto=format&fit=crop&w=900&q=85
+https://images.unsplash.com/photo-1532550907401-a500c9a57435?auto=format&fit=crop&w=900&q=85
+https://images.unsplash.com/photo-1551892374-ecf8754cf8b0?auto=format&fit=crop&w=1900&q=90
+https://images.unsplash.com/photo-1551892374-ecf8754cf8b0?auto=format&fit=crop&w=900&q=85
+https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=900&q=85
+https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=900&q=85
+https://images.unsplash.com/photo-1603133872878-684f208fb84b?auto=format&fit=crop&w=900&q=85
+https://images.unsplash.com/photo-1606313564200-e75d5e30476c?auto=format&fit=crop&w=900&q=85
+
+Licensing note:
+- These assets are hosted on Unsplash, but hosting on Unsplash alone is not proof that every individual asset is cleared for every intended commercial use.
+- Before commercial launch, verify each image against its source/Unsplash license record, keep a source record, and replace any asset whose license or provenance cannot be verified.
+- Do not upload third-party images, logos, screenshots, or recipe content without permission/license.
