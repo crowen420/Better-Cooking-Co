@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Better Cooking Co.</title>
+<title>Cook Better Co.</title>
 <style>
 :root{--purple:#6d42d8;--purple2:#4d299f;--light:#f7f6fb;--ink:#15131a;--muted:#6f6b78;--line:#e6e2ed;--green:#248454;--red:#c83e3e;--gold:#b98220}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--ink);background:#fbfbfc}button,input,select{font:inherit}button{cursor:pointer}.nav{height:74px;position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;padding:0 6%;background:rgba(255,255,255,.95);backdrop-filter:blur(16px);border-bottom:1px solid #eee}.logo{display:flex;align-items:center;gap:10px;font-weight:900;font-size:20px}.mark{width:39px;height:39px;border-radius:12px;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,#946df0,#4c299e)}.navlinks{display:flex;gap:28px}.navlinks a{text-decoration:none;color:#38343f;font-size:14px;font-weight:750}.btn{border:0;border-radius:13px;padding:13px 18px;font-weight:850}.primary{color:#fff;background:linear-gradient(135deg,#7950df,#5930b8);box-shadow:0 8px 22px #5b30b82b}.secondary{background:#fff;border:1px solid var(--line)}.hero{min-height:610px;padding:90px 7%;display:flex;align-items:center;color:#fff;background:linear-gradient(90deg,#160d22ef,#24133eb8,#24133e25),url("https://images.unsplash.com/photo-1551892374-ecf8754cf8b0?auto=format&fit=crop&w=1800&q=85") center/cover}.hero-content{max-width:720px}.eyebrow{font-size:13px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:#d7c9ff}.hero h1{font-size:64px;line-height:1.02;margin:14px 0}.hero h1 span{color:#cdbbff}.hero p{font-size:20px;line-height:1.6;color:#eee6f8;max-width:650px}.actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:26px}.section{padding:72px 7%}.heading{max-width:760px;margin-bottom:28px}.heading h2{font-size:38px;margin:0 0 8px}.heading p{color:var(--muted);line-height:1.6}.chips{display:flex;gap:9px;flex-wrap:wrap}.chip{border:1px solid var(--line);background:#fff;padding:9px 13px;border-radius:999px;font-weight:750}.chip.active{background:var(--purple);color:#fff;border-color:var(--purple)}.recipe-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}.recipe-card{background:#fff;border:1px solid var(--line);border-radius:20px;overflow:hidden;box-shadow:0 7px 25px #00000008}.recipe-img{height:190px;background-size:cover;background-position:center}.recipe-body{padding:18px}.recipe-body h3{margin:0 0 6px}.recipe-body p{color:var(--muted);font-size:14px;line-height:1.5}.tag{font-size:11px;font-weight:850;color:var(--purple);background:#f0ebff;padding:5px 8px;border-radius:999px;display:inline-block;margin:3px 4px 3px 0}.recipe-body .btn{width:100%;margin-top:10px}.builder{background:var(--light)}.panel{background:#fff;border:1px solid var(--line);border-radius:22px;padding:24px;box-shadow:0 10px 35px #00000008}.controls{display:grid;grid-template-columns:1fr 150px 1fr 1fr;gap:14px}.field label{display:block;font-size:12px;font-weight:850;margin-bottom:7px}.field input,.field select{width:100%;padding:13px;border:1px solid var(--line);border-radius:12px;background:#fff}.styles{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-top:18px}.style{border:1px solid var(--line);border-radius:14px;padding:13px;background:#fff;text-align:left}.style strong{display:block;font-size:13px}.style small{color:var(--muted)}.style.active{border-color:var(--purple);background:#f3efff}.status{margin-top:15px;padding:12px 14px;border-radius:12px;background:#f4f1fb;color:#554d62;font-size:13px}.results{margin-top:25px}.result-card{display:grid;grid-template-columns:75px 1fr auto;gap:15px;align-items:center;border:1px solid var(--line);border-radius:17px;padding:13px;margin:10px 0;background:#fff}.result-card img{width:75px;height:75px;border-radius:12px;object-fit:cover;background:#f4f4f4}.result-card h4{margin:0 0 4px}.muted{color:var(--muted);font-size:13px}.price{font-weight:900;font-size:17px}.result-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.tiny{padding:9px 11px;border-radius:10px;border:1px solid var(--line);background:#fff;font-weight:750;font-size:12px}.remove{color:var(--red);border-color:#efcccc}.total{display:flex;justify-content:space-between;align-items:center;margin-top:15px;padding:18px;border-radius:16px;background:#1e1728;color:#fff;font-weight:900}.education{background:#fff}.lesson-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.lesson{border:1px solid var(--line);border-radius:18px;padding:22px}.lesson h3{margin-top:0}.lesson p{color:var(--muted);line-height:1.6}.video{aspect-ratio:16/9;border-radius:14px;background:#17131d;display:grid;place-items:center;color:#fff;font-weight:900;margin-bottom:15px}.quiz-box,.account-box,.admin-box{max-width:850px;margin:auto}.choice-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:18px 0}.choice{padding:16px;border:1px solid var(--line);border-radius:14px;background:#fff;text-align:left}.choice:hover{border-color:var(--purple)}.choice.selected{border-color:var(--purple);background:#f3efff}.modal{position:fixed;inset:0;background:#110d1888;display:none;align-items:center;justify-content:center;padding:20px;z-index:100}.modal.open{display:flex}.modal-card{background:#fff;border-radius:22px;max-width:650px;width:100%;padding:25px;max-height:90vh;overflow:auto}.close{float:right;border:0;background:#eee;border-radius:10px;padding:7px 10px}.locked{opacity:.7}.lock{color:var(--gold);font-weight:850}.admin-list{display:grid;gap:10px}.admin-row{display:flex;justify-content:space-between;gap:10px;align-items:center;border:1px solid var(--line);border-radius:14px;padding:14px}.footer{padding:45px 7%;background:#17131d;color:#fff}.footer p{color:#bdb6c7}@media(max-width:1000px){.recipe-grid{grid-template-columns:repeat(2,1fr)}.controls{grid-template-columns:1fr 1fr}.styles{grid-template-columns:repeat(3,1fr)}}@media(max-width:650px){.navlinks{display:none}.hero h1{font-size:43px}.recipe-grid,.lesson-grid,.choice-grid{grid-template-columns:1fr}.controls,.styles,.result-card{grid-template-columns:60px 1fr}.result-actions{grid-column:1/-1;justify-content:flex-start}.result-card img{width:60px;height:60px}.section{padding:55px 5%}}
@@ -11,7 +11,7 @@
 </head>
 <body>
 <nav class="nav">
-  <div class="logo"><div class="mark">BC</div>Better Cooking Co.</div>
+  <div class="logo"><div class="mark">CB</div>Cook Better Co.</div>
   <div class="navlinks"><a href="#recipes">Recipes</a><a href="#shop">Shop</a><a href="#learn">Learn</a><a href="#account">Account</a></div>
   <button id="accountBtn" class="btn primary" onclick="openAccount()">Create Account</button>
 </nav>
@@ -62,7 +62,7 @@
 </section>
 
 <section class="section education" id="learn">
- <div class="heading"><h2>Cook With Us</h2><p>Better Cooking Co. is meant to teach, not just list ingredients. Each recipe can eventually have your own lessons, demonstrations, and skill-based instructions.</p></div>
+ <div class="heading"><h2>Cook With Us</h2><p>Cook Better Co. is meant to teach, not just list ingredients. Each recipe can eventually have your own lessons, demonstrations, and skill-based instructions.</p></div>
  <div class="lesson-grid">
   <div class="lesson"><div class="video">▶ YOUR RECIPE VIDEO</div><h3>Beginner Mode</h3><p>Full explanations, knife skills, temperatures, timing, and why each step matters.</p></div>
   <div class="lesson"><div class="video">▶ TECHNIQUE LESSON</div><h3>Intermediate Mode</h3><p>Shorter instructions with the important technique and decision points kept in.</p></div>
@@ -71,7 +71,7 @@
 </section>
 
 <section class="section" id="account">
- <div class="heading"><h2>Your Better Cooking Co. Account</h2><p>Accounts are the foundation for keeping each customer's preferences, favorites, subscription, and eventually their own Kroger connection together.</p></div>
+ <div class="heading"><h2>Your Cook Better Co. Account</h2><p>Accounts are the foundation for keeping each customer's preferences, favorites, subscription, and eventually their own Kroger connection together.</p></div>
  <div class="panel account-box">
   <div id="accountStatus">You are not signed in.</div>
   <div class="actions"><button class="btn primary" onclick="openAccount()">Sign In / Create Account</button><button class="btn secondary" onclick="connectKroger()">Link Kroger</button></div>
@@ -86,9 +86,9 @@
  </div>
 </section>
 
-<footer class="footer"><div class="logo"><div class="mark">BC</div>Better Cooking Co.</div><p>Better meals. Better shopping. Better cooking.</p></footer>
+<footer class="footer"><div class="logo"><div class="mark">CB</div>Cook Better Co.</div><p>Better meals. Better shopping. Better cooking.</p></footer>
 
-<div class="modal" id="accountModal"><div class="modal-card"><button class="close" onclick="closeModal('accountModal')">✕</button><h2>Better Cooking Co. Account</h2><div class="field"><label>Name</label><input id="accountName" placeholder="Your name"></div><div class="field" style="margin-top:12px"><label>Email</label><input id="accountEmail" type="email" placeholder="you@example.com"></div><div class="field" style="margin-top:12px"><label>Password</label><input id="accountPassword" type="password" placeholder="Password"></div><div class="actions"><button class="btn primary" onclick="register()">Create Account</button><button class="btn secondary" onclick="login()">Sign In</button></div><div id="accountMsg" class="status"></div></div></div>
+<div class="modal" id="accountModal"><div class="modal-card"><button class="close" onclick="closeModal('accountModal')">✕</button><h2>Cook Better Co. Account</h2><div class="field"><label>Name</label><input id="accountName" placeholder="Your name"></div><div class="field" style="margin-top:12px"><label>Email</label><input id="accountEmail" type="email" placeholder="you@example.com"></div><div class="field" style="margin-top:12px"><label>Password</label><input id="accountPassword" type="password" placeholder="Password"></div><div class="actions"><button class="btn primary" onclick="register()">Create Account</button><button class="btn secondary" onclick="login()">Sign In</button></div><div id="accountMsg" class="status"></div></div></div>
 
 <div class="modal" id="quizModal"><div class="modal-card"><button class="close" onclick="closeModal('quizModal')">✕</button><div id="quizContent"></div></div></div>
 
@@ -106,57 +106,167 @@ const recipes={
  brownies:{id:"brownies",name:"Fudgy Brownies",category:"Dessert",tags:["Dessert","Baking"],img:"https://images.unsplash.com/photo-1606313564200-e75d5e30476c?auto=format&fit=crop&w=900&q=80",ingredients:[["Brownie Mix",1,"box","brownie mix"],["Eggs",2,"each","eggs"],["Butter",.5,"lb","butter"]]}
 };
 
-let selectedRecipe="spaghetti", selectedStyle="value", stores=[], groceryResults=[], selectedProducts=[], authToken=localStorage.getItem("bcAuthToken")||"";
+const demoProducts={
+ "spaghetti":[["spaghetti","Kroger Spaghetti","Kroger",1.29,"https://images.unsplash.com/photo-1551892374-ecf8754cf8b0?auto=format&fit=crop&w=300&q=80"],["ground beef","Kroger Ground Beef","Kroger",6.99,"https://images.unsplash.com/photo-1588347818036-558601350947?auto=format&fit=crop&w=300&q=80"],["tomato sauce","Kroger Tomato Sauce","Kroger",1.49,"https://images.unsplash.com/photo-1472476443507-c7a5948772fc?auto=format&fit=crop&w=300&q=80"],["yellow onion","Yellow Onion","Kroger",1.29,"https://images.unsplash.com/photo-1518977676601-b53f82aba655?auto=format&fit=crop&w=300&q=80"],["garlic","Fresh Garlic","Kroger",0.79,"https://images.unsplash.com/photo-1540148426945-6cf22a6b2383?auto=format&fit=crop&w=300&q=80"]],
+ "chicken":[["chicken breast","Boneless Chicken Breast","Kroger",7.49,"https://images.unsplash.com/photo-1604503468506-a8da13d82791?auto=format&fit=crop&w=300&q=80"],["lemon","Fresh Lemons","Kroger",2.49,"https://images.unsplash.com/photo-1590502593747-42a996133562?auto=format&fit=crop&w=300&q=80"],["garlic","Fresh Garlic","Kroger",0.79,"https://images.unsplash.com/photo-1540148426945-6cf22a6b2383?auto=format&fit=crop&w=300&q=80"],["olive oil","Extra Virgin Olive Oil","Kroger",7.99,"https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?auto=format&fit=crop&w=300&q=80"],["fresh parsley","Fresh Parsley","Kroger",1.29,"https://images.unsplash.com/photo-1618375569909-3c8616cf7733?auto=format&fit=crop&w=300&q=80"]],
+ "grilledChicken":[["chicken breast","Boneless Chicken Breast","Kroger",7.49,"https://images.unsplash.com/photo-1532550907401-a500c9a57435?auto=format&fit=crop&w=300&q=80"],["lemon","Fresh Lemon","Kroger",0.69,"https://images.unsplash.com/photo-1590502593747-42a996133562?auto=format&fit=crop&w=300&q=80"],["garlic","Fresh Garlic","Kroger",0.79,"https://images.unsplash.com/photo-1540148426945-6cf22a6b2383?auto=format&fit=crop&w=300&q=80"],["bbq sauce","BBQ Sauce","Kroger",2.99,"https://images.unsplash.com/photo-1526318896980-cf78c088247c?auto=format&fit=crop&w=300&q=80"]],
+ "bbqChicken":[["chicken thighs","Boneless Chicken Thighs","Kroger",7.99,"https://images.unsplash.com/photo-1527477396000-e27163b481c2?auto=format&fit=crop&w=300&q=80"],["bbq sauce","BBQ Sauce","Kroger",2.99,"https://images.unsplash.com/photo-1526318896980-cf78c088247c?auto=format&fit=crop&w=300&q=80"],["corn","Fresh Corn","Kroger",2.49,"https://images.unsplash.com/photo-1551754655-cd27e38d2076?auto=format&fit=crop&w=300&q=80"],["green beans","Fresh Green Beans","Kroger",2.99,"https://images.unsplash.com/photo-1567375698348-5d9d5ae99de0?auto=format&fit=crop&w=300&q=80"]],
+ "tacos":[["chicken breast","Boneless Chicken Breast","Kroger",7.49,"https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=300&q=80"],["flour tortillas","Flour Tortillas","Kroger",2.49,"https://images.unsplash.com/photo-1628840042765-356cda07504e?auto=format&fit=crop&w=300&q=80"],["shredded cheddar cheese","Shredded Cheddar Cheese","Kroger",3.99,"https://images.unsplash.com/photo-1486297678162-eb2a19b0a32d?auto=format&fit=crop&w=300&q=80"],["tomatoes","Fresh Tomatoes","Kroger",2.49,"https://images.unsplash.com/photo-1546094096-0df4bcaaa337?auto=format&fit=crop&w=300&q=80"],["lettuce","Fresh Lettuce","Kroger",1.99,"https://images.unsplash.com/photo-1556801712-76c8eb07bbc9?auto=format&fit=crop&w=300&q=80"],["sour cream","Sour Cream","Kroger",2.49,"https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=300&q=80"]]
+};
+
+const genericImages=[
+ "https://images.unsplash.com/photo-1498837167922-ddd27525d352?auto=format&fit=crop&w=300&q=80"
+];
+
+let selectedRecipe="spaghetti",selectedStyle="value",groceryResults=[],selectedProducts=[];
 
 function $(id){return document.getElementById(id)}
-function esc(x){return String(x??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))};
+function esc(x){return String(x??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
 function recipeChanged(){selectedRecipe=$("recipeSelect").value;clearResults()}
 function chooseStyle(s){selectedStyle=s;document.querySelectorAll(".style").forEach(x=>x.classList.toggle("active",x.dataset.style===s));clearResults()}
 function clearResults(){groceryResults=[];selectedProducts=[];$("results").innerHTML="";$("total").style.display="none";$("cartActions").style.display="none"}
 function renderRecipes(){const fan=["spaghetti","grilledChicken","bbqChicken","tacos"];$("fanGrid").innerHTML=fan.map(id=>recipeCard(recipes[id])).join("");$("recipeSelect").innerHTML=Object.values(recipes).map(r=>`<option value="${r.id}">${esc(r.name)} — ${esc(r.category)}</option>`).join("");$("recipeSelect").value=selectedRecipe;renderAdmin()}
 function recipeCard(r){return `<article class="recipe-card"><div class="recipe-img" style="background-image:url('${r.img}')"></div><div class="recipe-body"><span class="tag">${esc(r.category)}</span><h3>${esc(r.name)}</h3><p>${r.tags.map(t=>`<span class="tag">${esc(t)}</span>`).join("")}</p><button class="btn primary" onclick="selectRecipe('${r.id}')">Cook This Meal</button></div></article>`}
-function selectRecipe(id){selectedRecipe=id;$("recipeSelect").value=id;clearResults();document.getElementById("shop").scrollIntoView({behavior:"smooth"})}
-function shouldBuy(search){return true}
-async function buildGroceries(){
- const zip=$("zip").value.trim();if(!/^\d{5}$/.test(zip))return status("Enter a valid 5-digit ZIP code.");
- $("findBtn").disabled=true;status("Finding nearby Kroger stores...");
- try{
-  const sr=await fetch("/api/stores?zip="+encodeURIComponent(zip));const sd=await sr.json();if(!sr.ok)throw Error(sd.error||"Store search failed.");
-  stores=sd.stores||[];$("store").innerHTML=stores.map(s=>`<option value="${esc(s.id)}">${esc(s.name)} — ${esc(s.city)}, ${esc(s.state)}</option>`).join("");
-  const store=$("store").value;status("Finding products and current prices...");
-  const ingredients=recipes[selectedRecipe].ingredients.filter(x=>shouldBuy(x[3]));
-  if(!ingredients.length){status("You already have everything needed for this recipe.");return}
-  const url=`/api/recipe-search?store=${encodeURIComponent(store)}&ingredients=${encodeURIComponent(ingredients.map(x=>x[3]).join(","))}`;
-  const r=await fetch(url),d=await r.json();if(!r.ok)throw Error(d.error||"Product search failed.");
-  groceryResults=d.ingredients||[];selectedProducts=groceryResults.map(x=>({product:x.products?.[0]||null,quantity:1}));
-  renderResults();status("Your grocery list is ready. Items marked Have were left out.");
- }catch(e){status(e.message);$("results").innerHTML=`<div class="status">${esc(e.message)}</div>`}
- finally{$("findBtn").disabled=false}
+function selectRecipe(id){selectedRecipe=id;$("recipeSelect").value=id;clearResults();$("shop").scrollIntoView({behavior:"smooth"})}
+
+function productPrice(p){return Number(p?.price||0)}
+function sortProducts(list){
+ return [...list].sort((a,b)=>{
+  const pa=productPrice(a),pb=productPrice(b);
+  if(selectedStyle==="cheapest"||selectedStyle==="value")return pa-pb;
+  if(selectedStyle==="premium")return pb-pa;
+  if(selectedStyle==="namebrand")return String(b?.brand||"").length-String(a?.brand||"").length||pa-pb;
+  return pa-pb;
+ });
 }
-function status(x){$("status").textContent=x}
-function productPrice(p){return Number(p?.salePrice??p?.price??0)}
-function sortProducts(list){return [...list].sort((a,b)=>{const pa=productPrice(a),pb=productPrice(b);if(selectedStyle==="cheapest")return pa-pb;if(selectedStyle==="namebrand")return String(b?.brand||"").length-String(a?.brand||"").length;if(selectedStyle==="premium")return pb-pa;if(selectedStyle==="healthy"){const score=x=>/organic|whole|lean|low sodium|natural|fresh/i.test(String(x?.description||"")+" "+String(x?.brand||""))?1:0;return score(b)-score(a)||pa-pb}if(selectedStyle==="protein"){const score=x=>/protein|chicken|beef|steak|turkey/i.test(String(x?.description||"")+" "+String(x?.brand||""))?1:0;return score(b)-score(a)||pa-pb}return pa-pb})}
-function renderResults(){let total=0;$("results").innerHTML=groceryResults.map((g,i)=>{const products=sortProducts(g.products||[]),p=selectedProducts[i]?.product||products[0];selectedProducts[i].product=p;const price=productPrice(p),line=price*(selectedProducts[i]?.quantity||1);total+=line;const image=p?.image||"https://images.unsplash.com/photo-1498837167922-ddd27525d352?auto=format&fit=crop&w=300&q=80";return `<div class="result-card"><img src="${esc(image)}" ><div><h4>${esc(g.ingredient)}</h4><div class="muted">${esc(p?.brand||"")} ${p?.size?"• "+esc(p.size):""}</div><div class="price">${price?"$"+line.toFixed(2):"Price unavailable"}</div></div><div class="result-actions"><button class="tiny" onclick="swapProduct(${i})">Swap</button><button class="tiny remove" onclick="alreadyHaveResult(${i})">✓ I Already Have This</button></div></div>`}).join("");$("totalPrice").textContent="$"+total.toFixed(2);$("total").style.display="flex";$("cartActions").style.display="flex"}
-function swapProduct(i){const g=groceryResults[i],products=sortProducts(g.products||[]);const names=products.map((p,n)=>`${n+1}. ${String(p?.description||"Product")} — $${productPrice(p).toFixed(2)}`).join("\n");const choice=prompt("Choose a product number:\n\n"+names);const n=Number(choice)-1;if(products[n]){selectedProducts[i].product=products[n];renderResults()}}
-function alreadyHaveResult(i){groceryResults.splice(i,1);selectedProducts.splice(i,1);renderResults();status("Removed from the grocery list.")}
-async function addToKroger(){if(!authToken){return status("Connect your Kroger account first.")}const items=selectedProducts.filter(x=>x.product?.upc).map(x=>({upc:x.product.upc,quantity:x.quantity||1,modality:"PICKUP"}));if(!items.length)return status("There are no products to add.");try{const r=await fetch("/api/cart/add",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({items})});const d=await r.json();if(!r.ok)throw Error(d.error||"Could not add to Kroger.");status("Added "+d.itemsAdded+" items to your Kroger cart.");window.open(d.cartUrl||"https://www.kroger.com/shopping/cart","_blank")}catch(e){status(e.message)}}
-function connectKroger(){window.location.href="/auth/kroger"}
-function openModal(id){$(id).classList.add("open")}function closeModal(id){$(id).classList.remove("open")}
+
+function buildDemoProducts(recipe){
+ const raw=demoProducts[recipe.id]||recipe.ingredients.map((x,i)=>[
+  x[3],x[0],"Kroger",Math.max(0.99,Math.round((2.49+i*1.17)*100)/100),genericImages[0]
+ ]);
+ return recipe.ingredients.map((ing,i)=>{
+  const key=ing[3];
+  const match=raw.find(p=>p[0]===key)||raw[i%raw.length];
+  return {ingredient:ing[0],products:[{description:match[1],brand:match[2],price:match[3],image:match[4],upc:"DEMO-"+key.replace(/\W/g,"").toUpperCase()}]};
+ });
+}
+
+function buildGroceries(){
+ const recipe=recipes[selectedRecipe];
+ const servings=Number($("servings").value||2);
+ const zip=$("zip").value.trim();
+ if(!/^\d{5}$/.test(zip))return status("Enter a valid 5-digit ZIP code.");
+ $("store").innerHTML=`<option value="demo-store">Kroger — ${esc(zip)}</option>`;
+ groceryResults=buildDemoProducts(recipe);
+ const multiplier=servings/recipe.baseServings;
+ selectedProducts=groceryResults.map((x,i)=>({product:x.products[0],quantity:Math.max(1,Math.ceil(multiplier))}));
+ renderResults();
+ status("Demo grocery matches are ready. Live Kroger pricing/cart connection requires a secure backend.");
+}
+
+function renderResults(){
+ let total=0;
+ $("results").innerHTML=groceryResults.map((g,i)=>{
+  const products=sortProducts(g.products||[]);
+  const p=selectedProducts[i]?.product||products[0];
+  selectedProducts[i].product=p;
+  const price=productPrice(p);
+  const qty=selectedProducts[i]?.quantity||1;
+  const line=price*qty;
+  total+=line;
+  const image=p?.image||genericImages[0];
+  return `<div class="result-card"><img src="${esc(image)}"><div><h4>${esc(g.ingredient)}</h4><div class="muted">${esc(p?.brand||"")} ${p?.description?"• "+esc(p.description):""}</div><div class="price">${price?"$"+line.toFixed(2):"Price unavailable"}</div></div><div class="result-actions"><button class="tiny" onclick="swapProduct(${i})">Swap</button><button class="tiny remove" onclick="alreadyHaveResult(${i})">✓ I Already Have This</button></div></div>`;
+ }).join("");
+ $("totalPrice").textContent="$"+total.toFixed(2);
+ $("total").style.display="flex";
+ $("cartActions").style.display="flex";
+}
+
+function swapProduct(i){
+ const p=selectedProducts[i]?.product;
+ if(!p)return;
+ const choice=prompt("Enter a different product name, or Cancel to keep this one:",p.description);
+ if(choice&&choice.trim()){
+  selectedProducts[i].product={...p,description:choice.trim()};
+  renderResults();
+ }
+}
+
+function alreadyHaveResult(i){
+ groceryResults.splice(i,1);
+ selectedProducts.splice(i,1);
+ renderResults();
+ status("Removed from the grocery list.");
+}
+
+function addToKroger(){
+ status("Live Kroger cart connection is not available in the one-file static version. Connect a secure Vercel backend when you are ready.");
+}
+
+function connectKroger(){
+ window.open("https://www.kroger.com","_blank");
+ status("Kroger opened in a new tab. A secure backend is required for account linking and cart API access.");
+}
+
+function openModal(id){$(id).classList.add("open")}
+function closeModal(id){$(id).classList.remove("open")}
 function openAccount(){openModal("accountModal")}
-async function register(){const body={name:$("accountName").value,email:$("accountEmail").value,password:$("accountPassword").value};await accountRequest("/api/account/register",body)}
-async function login(){const body={email:$("accountEmail").value,password:$("accountPassword").value};await accountRequest("/api/account/login",body)}
-async function accountRequest(url,body){try{const r=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});const d=await r.json();if(!r.ok)throw Error(d.error);authToken=d.token;localStorage.setItem("bcAuthToken",authToken);closeModal("accountModal");updateAccount(d.customer)}catch(e){$("accountMsg").textContent=e.message}}
-async function checkAccount(){if(!authToken)return;try{const r=await fetch("/api/account/me",{headers:{Authorization:"Bearer "+authToken}});const d=await r.json();if(d.loggedIn)updateAccount(d.customer);else{authToken="";localStorage.removeItem("bcAuthToken")}}catch{}}
-function updateAccount(c){$("accountBtn").textContent=c.name||"My Account";$("accountStatus").innerHTML=`Signed in as <strong>${esc(c.name)}</strong> (${esc(c.email)}).`;$("accountMsg").textContent=""}
-async function startSubscription(){if(!authToken){openAccount();return}try{const r=await fetch("/api/subscription/start-trial",{method:"POST",headers:{Authorization:"Bearer "+authToken}});const d=await r.json();alert(d.message||"Your one-month free trial is ready.")}catch{alert("Could not start the trial.")}}
-function openChickenQuiz(){openModal("quizModal");$("quizContent").innerHTML=`<h2>What kind of chicken are you craving?</h2><p class="muted">Pick the flavor direction you want.</p><div class="choice-grid">${["Smoky","BBQ","Mexican","Teriyaki / Asian","Fresh Lemon Herb"].map(x=>`<button class="choice" onclick="chickenResult('${x}')"><strong>${x}</strong></button>`).join("")}</div>`}
-function chickenResult(x){const map={"Smoky":"grilledChicken","BBQ":"bbqChicken","Mexican":"mexicanChicken","Teriyaki / Asian":"teriyakiChicken","Fresh Lemon Herb":"chicken"};const r=recipes[map[x]];$("quizContent").innerHTML=`<h2>Your match: ${esc(r.name)}</h2><p class="muted">${r.tags.join(" • ")}</p><button class="btn primary" onclick="selectFromQuiz('${r.id}')">Build This Meal</button>`}
+
+function accountData(){
+ try{return JSON.parse(localStorage.getItem("cbAccount")||"null")}catch{return null}
+}
+
+function register(){
+ const name=$("accountName").value.trim(),email=$("accountEmail").value.trim();
+ if(!name||!email||!$("accountPassword").value)return $("accountMsg").textContent="Enter your name, email, and password.";
+ const c={name,email};
+ localStorage.setItem("cbAccount",JSON.stringify(c));
+ closeModal("accountModal");
+ updateAccount(c);
+}
+
+function login(){
+ const c=accountData();
+ const email=$("accountEmail").value.trim();
+ if(c&&c.email===email){closeModal("accountModal");updateAccount(c);return}
+ $("accountMsg").textContent="No local account found. Create an account first.";
+}
+
+function checkAccount(){const c=accountData();if(c)updateAccount(c)}
+function updateAccount(c){
+ $("accountBtn").textContent=c.name||"My Account";
+ $("accountStatus").innerHTML=`Signed in as <strong>${esc(c.name)}</strong> (${esc(c.email)}).`;
+ $("accountMsg").textContent="";
+}
+function startSubscription(){
+ if(!accountData()){openAccount();return}
+ alert("Your one-month free trial is ready in this demo. Stripe billing will be connected later.");
+}
+
+function openChickenQuiz(){
+ openModal("quizModal");
+ $("quizContent").innerHTML=`<h2>What kind of chicken are you craving?</h2><p class="muted">Pick the flavor direction you want.</p><div class="choice-grid">${["Smoky","BBQ","Mexican","Teriyaki / Asian","Fresh Lemon Herb"].map(x=>`<button class="choice" onclick="chickenResult('${x}')"><strong>${x}</strong></button>`).join("")}</div>`;
+}
+function chickenResult(x){
+ const map={"Smoky":"grilledChicken","BBQ":"bbqChicken","Mexican":"mexicanChicken","Teriyaki / Asian":"teriyakiChicken","Fresh Lemon Herb":"chicken"};
+ const r=recipes[map[x]];
+ $("quizContent").innerHTML=`<h2>Your match: ${esc(r.name)}</h2><p class="muted">${r.tags.join(" • ")}</p><button class="btn primary" onclick="selectFromQuiz('${r.id}')">Build This Meal</button>`;
+}
 function selectFromQuiz(id){closeModal("quizModal");selectRecipe(id)}
-function openPastaQuiz(){openModal("quizModal");$("quizContent").innerHTML=`<h2>Make Your Own Pasta</h2><p class="muted">Choose the pieces of your meal.</p><div class="choice-grid"><button class="choice" onclick="pastaChoice('Creamy')"><strong>Creamy sauce</strong><small>Alfredo-style</small></button><button class="choice" onclick="pastaChoice('Tomato')"><strong>Tomato sauce</strong><small>Classic red sauce</small></button><button class="choice" onclick="pastaChoice('Protein')"><strong>Protein</strong><small>Chicken, beef, or shrimp</small></button><button class="choice" onclick="pastaChoice('Veggies')"><strong>Vegetables</strong><small>Build around what you like</small></button></div>`}
-function pastaChoice(x){$("quizContent").innerHTML=`<h2>${x} pasta</h2><p class="muted">The builder can eventually combine pasta type, protein, sauce, vegetables, and extras. For now, here's our starter pasta recipe.</p><button class="btn primary" onclick="selectFromQuiz('pastaAlfredo')">Use Starter Pasta</button>`}
-function renderAdmin(){const r=Object.values(recipes);$("adminList").innerHTML=r.map(x=>`<div class="admin-row"><div><strong>${esc(x.name)}</strong><div class="muted">${esc(x.category)} • ${x.tags.join(", ")}</div></div><div><button class="tiny" onclick="toggleLock('${x.id}')">${x.locked?"Unlock":"Lock"}</button></div></div>`).join("")}
+function openPastaQuiz(){
+ openModal("quizModal");
+ $("quizContent").innerHTML=`<h2>Make Your Own Pasta</h2><p class="muted">Choose the pieces of your meal.</p><div class="choice-grid"><button class="choice" onclick="pastaChoice('Creamy')"><strong>Creamy sauce</strong><small>Alfredo-style</small></button><button class="choice" onclick="pastaChoice('Tomato')"><strong>Tomato sauce</strong><small>Classic red sauce</small></button><button class="choice" onclick="pastaChoice('Protein')"><strong>Protein</strong><small>Chicken, beef, or shrimp</small></button><button class="choice" onclick="pastaChoice('Veggies')"><strong>Vegetables</strong><small>Build around what you like</small></button></div>`;
+}
+function pastaChoice(x){
+ $("quizContent").innerHTML=`<h2>${x} pasta</h2><p class="muted">The builder can eventually combine pasta type, protein, sauce, vegetables, and extras. For now, here's our starter pasta recipe.</p><button class="btn primary" onclick="selectFromQuiz('pastaAlfredo')">Use Starter Pasta</button>`;
+}
+function renderAdmin(){
+ $("adminList").innerHTML=Object.values(recipes).map(x=>`<div class="admin-row"><div><strong>${esc(x.name)}</strong><div class="muted">${esc(x.category)} • ${x.tags.join(", ")}</div></div><div><button class="tiny" onclick="toggleLock('${x.id}')">${x.locked?"Unlock":"Lock"}</button></div></div>`).join("");
+}
 function toggleLock(id){recipes[id].locked=!recipes[id].locked;renderAdmin()}
-renderRecipes();checkAccount();
+
+renderRecipes();
+checkAccount();
 </script>
 </body>
 </html>
