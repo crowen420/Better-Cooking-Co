@@ -107,7 +107,7 @@ url("https://images.unsplash.com/photo-1551892374-ecf8754cf8b0?auto=format&fit=c
     <div class="panel">
       <div class="field"><label for="recipeSelect">Recipe</label><select id="recipeSelect" onchange="clearResults()"></select></div>
       <div class="field"><label for="servings">Servings</label><select id="servings"><option>2</option><option>4</option><option>6</option><option>8</option></select></div>
-      <div class="field"><label for="zip">ZIP Code</label><input id="zip" inputmode="numeric" maxlength="5" value="47111" placeholder="47111"></div>
+      <div class="field"><label for="zip">ZIP Code</label><input id="zip" inputmode="numeric" maxlength="5" autocomplete="postal-code" placeholder="Enter ZIP code"></div>
       <div class="field"><label for="store">Kroger Store</label><select id="store"><option value="">Find stores first</option></select></div>
       <div class="styles">
         <button class="style active" data-style="value" onclick="chooseStyle('value')"><strong>Price Focus</strong><small>Lower-priced matches first</small></button>
@@ -244,26 +244,64 @@ function swapProduct(i){
  selectedProducts[i]={product:next,quantity:g.quantity};renderResults();
 }
 function alreadyHave(i){groceryResults.splice(i,1);selectedProducts.splice(i,1);renderResults();status("Removed from your grocery list.","ok")}
-async function addToKroger(){
- if(!selectedProducts.length)return status("Find your groceries first.","err");
+function pendingCart(){try{return JSON.parse(localStorage.getItem("cbPendingKrogerCart")||"null")}catch{return null}}
+function savePendingCart(){try{localStorage.setItem("cbPendingKrogerCart",JSON.stringify(selectedProducts))}catch{}}
+function clearPendingCart(){try{localStorage.removeItem("cbPendingKrogerCart")}catch{}}
+function restorePendingCart(){
+ const pending=pendingCart();
+ if(!Array.isArray(pending)||!pending.length)return false;
+ selectedProducts=pending;
+ renderResults();
+ return true;
+}
+function cartItems(){
+ return selectedProducts.map(x=>({
+   quantity:Math.max(1,Number(x.quantity||1)),
+   upc:String(x.product?.upc||""),
+   modality:String(x.product?.modality||"PICKUP")
+ })).filter(x=>/^\d{8,14}$/.test(x.upc));
+}
+async function addToKroger(auto=false){
+ if(!selectedProducts.length){
+   if(!restorePendingCart())return status("Find your groceries first.","err");
+ }
+ const items=cartItems();
+ if(!items.length)return status("No valid Kroger products are selected.","err");
+ savePendingCart();
  status("Adding your selected groceries to Kroger...");
  try{
-   const r=await fetch("/api/cart/add",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({items:selectedProducts.map(x=>({quantity:x.quantity,upc:x.product.upc,modality:x.product.modality||"ais"}))})});
+   const r=await fetch("/api/cart/add",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({items})});
    const data=await r.json().catch(()=>null);
-   if(r.status===401){status("Connect your Kroger account first. Redirecting to Kroger sign-in...","err");setTimeout(connectKroger,350);return;}
+   if(r.status===401){
+     status("Connect your Kroger account first. Redirecting to Kroger sign-in...","err");
+     setTimeout(()=>{window.location.href="/api/auth/kroger"},350);
+     return;
+   }
    if(!r.ok)throw new Error(data?.error||`Kroger cart failed (${r.status})`);
-   status(`Added ${data?.count||selectedProducts.length} item${(data?.count||selectedProducts.length)===1?"":"s"}. Opening your Kroger cart...`,"ok");
-   setTimeout(()=>{window.location.assign("https://www.kroger.com/cart");},500);
+   clearPendingCart();
+   status(`Added ${data?.count||items.length} item${(data?.count||items.length)===1?"":"s"}. Opening your Kroger cart...`,"ok");
+   setTimeout(()=>{window.location.assign(data?.cartUrl||"https://www.kroger.com/cart");},650);
  }catch(e){console.error(e);status(e.message||"Could not add items to Kroger.","err")}
 }
-function connectKroger(){window.location.href="/api/auth/kroger"}
+function connectKroger(){savePendingCart();window.location.href="/api/auth/kroger"}
 async function checkKroger(){
  try{
    const r=await fetch("/api/auth/status",{cache:"no-store"});const d=await r.json();
    $("krogerBtnText").textContent=d.connected?"Kroger Connected":"Connect Kroger";
    const p=new URLSearchParams(location.search);
-   if(p.get("kroger")==="connected"){status("Kroger is connected. Your selected groceries can now be added to your cart.","ok");history.replaceState({},document.title,location.pathname)}
-   if(p.get("kroger")==="error")status(`Kroger connection failed: ${p.get("message")||"Unknown error"}`,"err");
+   if(p.get("kroger")==="connected"){
+     const restored=restorePendingCart();
+     history.replaceState({},document.title,location.pathname);
+     if(restored){
+       status("Kroger connected. Adding your selected groceries...","ok");
+       setTimeout(()=>addToKroger(true),450);
+     }else status("Kroger is connected.","ok");
+   }
+   if(p.get("kroger")==="error"){
+     clearPendingCart();
+     status(`Kroger connection failed: ${p.get("message")||"Unknown error"}`,"err");
+     history.replaceState({},document.title,location.pathname);
+   }
  }catch(e){console.error(e)}
 }
 function accountData(){try{return JSON.parse(localStorage.getItem("cbLocalProfile")||"null")}catch{return null}}

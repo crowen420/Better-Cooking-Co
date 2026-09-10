@@ -6,6 +6,20 @@ const SESSION = "cb_kroger_session";
 const STATE = "cb_kroger_state";
 
 const env = n => { if (!process.env[n]) throw new Error(`Missing environment variable: ${n}`); return process.env[n]; };
+function errorText(value){
+  if(!value) return "Kroger request failed.";
+  if(typeof value === "string") return value;
+  if(Array.isArray(value)) return value.map(errorText).filter(Boolean).join("; ") || "Kroger request failed.";
+  if(typeof value === "object"){
+    if(value.reason) return String(value.reason);
+    if(value.error_description) return String(value.error_description);
+    if(value.error) return typeof value.error === "string" ? value.error : errorText(value.error);
+    if(value.code) return `${value.code}${value.reason ? `: ${value.reason}` : ""}`;
+    if(value.errors) return errorText(value.errors);
+    try { return JSON.stringify(value); } catch { return "Kroger request failed."; }
+  }
+  return String(value);
+}
 const json = (res, status, body, headers={}) => { res.statusCode=status; for (const [k,v] of Object.entries(headers)) res.setHeader(k,v); res.setHeader("Content-Type","application/json; charset=utf-8"); res.end(JSON.stringify(body)); };
 const redirect = (res,url,headers={}) => { res.statusCode=302; res.setHeader("Location",url); for(const [k,v] of Object.entries(headers)) res.setHeader(k,v); res.end(); };
 function parseCookies(req){ const out={}; for(const part of (req.headers.cookie||"").split(";")){ const i=part.indexOf("="); if(i<0) continue; out[part.slice(0,i).trim()]=decodeURIComponent(part.slice(i+1).trim()); } return out; }
@@ -79,7 +93,12 @@ async function cart(req,res){
   const b=await body(req),items=(Array.isArray(b.items)?b.items:[]).map(x=>({quantity:Math.max(1,Number(x.quantity||1)),upc:String(x.upc||""),modality:String(x.modality||"ais")})).filter(x=>/^\d{8,14}$/.test(x.upc));
   if(!items.length) return json(res,400,{error:"No valid UPCs supplied."});
   const r=await fetch(`${API}/cart/add`,{method:"PUT",headers:{Authorization:`Bearer ${s.access_token}`,"Content-Type":"application/json",Accept:"application/json"},body:JSON.stringify({items})}),text=await r.text();
-  if(!r.ok){let d={};try{d=JSON.parse(text)}catch{}return json(res,r.status,{error:d.errors||d.error_description||d.error||"Kroger cart request failed."});}
+  if(!r.ok){
+    let d={};
+    try{d=JSON.parse(text)}catch{}
+    console.error("Kroger cart error",r.status,d||text);
+    return json(res,r.status,{error:errorText(d.errors||d),status:r.status,details:d.errors||d});
+  }
   return json(res,200,{ok:true,count:items.length,cartUrl:"https://www.kroger.com/cart"});
 }
 
