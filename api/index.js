@@ -80,7 +80,7 @@ async function cart(req,res){
   if(!items.length) return json(res,400,{error:"No valid UPCs supplied."});
   const r=await fetch(`${API}/cart/add`,{method:"PUT",headers:{Authorization:`Bearer ${s.access_token}`,"Content-Type":"application/json",Accept:"application/json"},body:JSON.stringify({items})}),text=await r.text();
   if(!r.ok){let d={};try{d=JSON.parse(text)}catch{}return json(res,r.status,{error:d.errors||d.error_description||d.error||"Kroger cart request failed."});}
-  return json(res,200,{ok:true,count:items.length});
+  return json(res,200,{ok:true,count:items.length,cartUrl:"https://www.kroger.com/cart"});
 }
 
 module.exports=async function(req,res){
