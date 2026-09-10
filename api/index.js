@@ -90,7 +90,7 @@ async function callback(req,res){
 async function cart(req,res){
   if(req.method!=="PUT") return json(res,405,{error:"Method not allowed."});
   const s=await userSession(req,res); if(!s) return json(res,401,{error:"Connect your Kroger account first."});
-  const b=await body(req),items=(Array.isArray(b.items)?b.items:[]).map(x=>({quantity:Math.max(1,Number(x.quantity||1)),upc:String(x.upc||""),modality:String(x.modality||"ais")})).filter(x=>/^\d{8,14}$/.test(x.upc));
+  const b=await body(req),items=(Array.isArray(b.items)?b.items:[]).map(x=>({quantity:Math.max(1,Number(x.quantity||1)),upc:String(x.upc||""),modality:(String(x.modality||"PICKUP").toUpperCase()==="DELIVERY"?"DELIVERY":"PICKUP")})).filter(x=>/^\d{8,14}$/.test(x.upc));
   if(!items.length) return json(res,400,{error:"No valid UPCs supplied."});
   const r=await fetch(`${API}/cart/add`,{method:"PUT",headers:{Authorization:`Bearer ${s.access_token}`,"Content-Type":"application/json",Accept:"application/json"},body:JSON.stringify({items})}),text=await r.text();
   if(!r.ok){

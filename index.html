@@ -258,7 +258,7 @@ function cartItems(){
  return selectedProducts.map(x=>({
    quantity:Math.max(1,Number(x.quantity||1)),
    upc:String(x.product?.upc||""),
-   modality:String(x.product?.modality||"PICKUP")
+   modality:"PICKUP"
  })).filter(x=>/^\d{8,14}$/.test(x.upc));
 }
 async function addToKroger(auto=false){
