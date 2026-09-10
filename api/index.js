@@ -37,7 +37,7 @@ async function userSession(req,res){
   return s;
 }
 async function body(req){ if(req.body&&typeof req.body==='object') return req.body; let raw=""; for await(const c of req) raw+=c; try{return JSON.parse(raw||"{}")}catch{return {}} }
-function route(req){ let r=req.query?.route; if(Array.isArray(r)) return r.join("/"); if(typeof r==='string') return r; return new URL(req.url,`https://${req.headers.host}`).pathname.replace(/^\/api\/?/,"").replace(/\/$/,""); }
+function route(req){ return new URL(req.url,`https://${req.headers.host}`).pathname.replace(/^\/api\/?/,"").replace(/\/$/,""); }
 
 async function stores(req,res){
   if(req.method!=="GET") return json(res,405,{error:"Method not allowed."});

@@ -1,5 +1,5 @@
 {
-  "functions": {
-    "api/[...route].js": { "runtime": "nodejs22.x" }
-  }
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "/api" }
+  ]
 }
