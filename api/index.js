@@ -2,134 +2,73 @@ const crypto = require("crypto");
 const API = "https://api.kroger.com/v1";
 const TOKEN = `${API}/connect/oauth2/token`;
 const AUTHORIZE = `${API}/connect/oauth2/authorize`;
-const SESSION = "cb_kroger_session";
-const STATE = "cb_kroger_state";
+const KROGER_SESSION = "cb_kroger_session";
+const KROGER_STATE = "cb_kroger_state";
+const ACCOUNT_SESSION = "cb_account_session";
+const ACCOUNT_STATE = "cb_account_state";
 
 const env = n => { if (!process.env[n]) throw new Error(`Missing environment variable: ${n}`); return process.env[n]; };
-function errorText(value){
-  if(!value) return "Kroger request failed.";
-  if(typeof value === "string") return value;
-  if(Array.isArray(value)) return value.map(errorText).filter(Boolean).join("; ") || "Kroger request failed.";
-  if(typeof value === "object"){
-    if(value.reason) return String(value.reason);
-    if(value.error_description) return String(value.error_description);
-    if(value.error) return typeof value.error === "string" ? value.error : errorText(value.error);
-    if(value.code) return `${value.code}${value.reason ? `: ${value.reason}` : ""}`;
-    if(value.errors) return errorText(value.errors);
-    try { return JSON.stringify(value); } catch { return "Kroger request failed."; }
-  }
-  return String(value);
-}
-const json = (res, status, body, headers={}) => { res.statusCode=status; for (const [k,v] of Object.entries(headers)) res.setHeader(k,v); res.setHeader("Content-Type","application/json; charset=utf-8"); res.end(JSON.stringify(body)); };
-const redirect = (res,url,headers={}) => { res.statusCode=302; res.setHeader("Location",url); for(const [k,v] of Object.entries(headers)) res.setHeader(k,v); res.end(); };
-function parseCookies(req){ const out={}; for(const part of (req.headers.cookie||"").split(";")){ const i=part.indexOf("="); if(i<0) continue; out[part.slice(0,i).trim()]=decodeURIComponent(part.slice(i+1).trim()); } return out; }
-function cookie(name,value,maxAge){ return `${name}=${encodeURIComponent(value)}; Path=/; Max-Age=${maxAge}; HttpOnly; Secure; SameSite=Lax`; }
-function clear(name){ return cookie(name,"",0); }
-function key(){ return crypto.createHash("sha256").update(env("SESSION_SECRET")).digest(); }
-function encrypt(obj){ const iv=crypto.randomBytes(12), c=crypto.createCipheriv("aes-256-gcm",key(),iv); const data=Buffer.concat([c.update(JSON.stringify(obj),"utf8"),c.final()]); return Buffer.concat([iv,c.getAuthTag(),data]).toString("base64url"); }
-function decrypt(value){ try{ const b=Buffer.from(value,"base64url"),d=crypto.createDecipheriv("aes-256-gcm",key(),b.subarray(0,12)); d.setAuthTag(b.subarray(12,28)); return JSON.parse(Buffer.concat([d.update(b.subarray(28)),d.final()]).toString("utf8")); }catch{return null} }
-function redirectUri(req){ return process.env.KROGER_REDIRECT_URI || `https://${req.headers.host}/api/auth/kroger/callback`; }
-async function clientToken(){
-  const basic=Buffer.from(`${env("KROGER_CLIENT_ID")}:${env("KROGER_CLIENT_SECRET")}`).toString("base64");
-  const r=await fetch(TOKEN,{method:"POST",headers:{Authorization:`Basic ${basic}`,"Content-Type":"application/x-www-form-urlencoded",Accept:"application/json"},body:new URLSearchParams({grant_type:"client_credentials",scope:"product.compact"})});
-  const d=await r.json().catch(()=>({}));
-  if(!r.ok) throw new Error(`Kroger client token failed (${r.status}): ${d.error_description||d.error||d.reason||"Unknown error"}`);
-  if(!d.access_token) throw new Error("Kroger token response did not include an access token.");
-  return d.access_token;
-}
-async function userSession(req,res){
-  const s=decrypt(parseCookies(req)[SESSION]); if(!s) return null;
-  if(s.expires_at && Date.now()>=s.expires_at){
-    if(!s.refresh_token){res.setHeader("Set-Cookie",clear(SESSION));return null;}
-    const basic=Buffer.from(`${env("KROGER_CLIENT_ID")}:${env("KROGER_CLIENT_SECRET")}`).toString("base64");
-    const r=await fetch(TOKEN,{method:"POST",headers:{Authorization:`Basic ${basic}`,"Content-Type":"application/x-www-form-urlencoded",Accept:"application/json"},body:new URLSearchParams({grant_type:"refresh_token",refresh_token:s.refresh_token})});
-    const d=await r.json().catch(()=>({}));
-    if(!r.ok||!d.access_token){res.setHeader("Set-Cookie",clear(SESSION));return null;}
-    s={...s,access_token:d.access_token,refresh_token:d.refresh_token||s.refresh_token,expires_at:Date.now()+Math.max(60,Number(d.expires_in||1800)-60)*1000};
-    res.setHeader("Set-Cookie",cookie(SESSION,encrypt(s),2592000));
-  }
-  return s;
-}
-async function body(req){ if(req.body&&typeof req.body==='object') return req.body; let raw=""; for await(const c of req) raw+=c; try{return JSON.parse(raw||"{}")}catch{return {}} }
-function route(req){ return new URL(req.url,`https://${req.headers.host}`).pathname.replace(/^\/api\/?/,"").replace(/\/$/,""); }
+const json = (res,status,body,headers={}) => { res.statusCode=status; for(const [k,v] of Object.entries(headers))res.setHeader(k,v); res.setHeader("Content-Type","application/json; charset=utf-8"); res.end(JSON.stringify(body)); };
+const redirect = (res,url,headers={}) => { res.statusCode=302; res.setHeader("Location",url); for(const [k,v] of Object.entries(headers))res.setHeader(k,v); res.end(); };
+function parseCookies(req){const out={};for(const part of (req.headers.cookie||"").split(";")){const i=part.indexOf("=");if(i<0)continue;out[part.slice(0,i).trim()]=decodeURIComponent(part.slice(i+1).trim())}return out}
+function cookie(name,value,maxAge){return `${name}=${encodeURIComponent(value)}; Path=/; Max-Age=${maxAge}; HttpOnly; Secure; SameSite=Lax`}
+function clearCookie(name){return cookie(name,"",0)}
+function hashKey(secret){return crypto.createHash("sha256").update(secret).digest()}
+function seal(obj,secretName="SESSION_SECRET"){const iv=crypto.randomBytes(12),c=crypto.createCipheriv("aes-256-gcm",hashKey(env(secretName)),iv);const data=Buffer.concat([c.update(JSON.stringify(obj),"utf8"),c.final()]);return Buffer.concat([iv,c.getAuthTag(),data]).toString("base64url")}
+function unseal(value,secretName="SESSION_SECRET"){try{const b=Buffer.from(value,"base64url"),d=crypto.createDecipheriv("aes-256-gcm",hashKey(env(secretName)),b.subarray(0,12));d.setAuthTag(b.subarray(12,28));return JSON.parse(Buffer.concat([d.update(b.subarray(28)),d.final()]).toString("utf8"))}catch{return null}}
+function redirectUri(req){return process.env.KROGER_REDIRECT_URI||`https://${req.headers.host}/api/auth/kroger/callback`}
+function route(req){return new URL(req.url,`https://${req.headers.host}`).pathname.replace(/^\/api\/?/,"").replace(/\/$/,"")}
+async function body(req){if(req.body&&typeof req.body==="object")return req.body;let raw="";for await(const c of req)raw+=c;try{return JSON.parse(raw||"{}")}catch{return {}}}
+function errorText(v){if(!v)return "Request failed.";if(typeof v==="string")return v;if(Array.isArray(v))return v.map(errorText).filter(Boolean).join("; ")||"Request failed.";if(v.message)return String(v.message);if(v.error_description)return String(v.error_description);if(v.error)return typeof v.error==="string"?v.error:errorText(v.error);if(v.reason)return String(v.reason);try{return JSON.stringify(v)}catch{return "Request failed."}}
 
-async function stores(req,res){
-  if(req.method!=="GET") return json(res,405,{error:"Method not allowed."});
-  const u=new URL(req.url,`https://${req.headers.host}`),zip=u.searchParams.get("zip")||"";
-  if(!/^\d{5}$/.test(zip)) return json(res,400,{error:"A valid 5-digit ZIP code is required."});
-  const token=await clientToken(),p=new URLSearchParams({"filter.zipCode.near":zip,"filter.radiusInMiles":u.searchParams.get("radius")||"15","filter.limit":u.searchParams.get("limit")||"10"});
-  const r=await fetch(`${API}/locations?${p}`,{headers:{Authorization:`Bearer ${token}`,Accept:"application/json"}}),d=await r.json().catch(()=>({}));
-  if(!r.ok) return json(res,r.status,{error:d.errors||d.error_description||"Kroger locations request failed."});
-  return json(res,200,{data:(d.data||[]).map(x=>({id:x.locationId,name:x.name,chain:x.chain,address:x.address,modalities:x.modality||x.modalities||[]}))});
-}
-async function products(req,res){
-  if(req.method!=="GET") return json(res,405,{error:"Method not allowed."});
-  const u=new URL(req.url,`https://${req.headers.host}`),term=(u.searchParams.get("term")||"").trim(),locationId=(u.searchParams.get("locationId")||"").trim();
-  if(!term||!locationId) return json(res,400,{error:"term and locationId are required."});
-  const token=await clientToken(),p=new URLSearchParams({"filter.term":term,"filter.locationId":locationId,"filter.limit":u.searchParams.get("limit")||"8"});
-  const r=await fetch(`${API}/products?${p}`,{headers:{Authorization:`Bearer ${token}`,Accept:"application/json"}}),d=await r.json().catch(()=>({}));
-  if(!r.ok) return json(res,r.status,{error:d.errors||d.error_description||"Kroger products request failed."});
-  const out=(d.data||[]).map(x=>{const item=(x.items||[]).find(i=>i.price)||x.items?.[0]||{},price=item.price?.regular??item.price?.promo??null,f=item.fulfillment||{},modality=f.csp?"csp":f.ais?"ais":f.dth?"dth":f.sth?"sth":"ais",im=(x.images||[]).find(i=>i.perspective==="front")||x.images?.[0];return {upc:x.upc,description:x.description||x.productDescription||"",brand:x.brand||"",price,image:im?.sizes?.[0]?.url||im?.url||"",modality};}).filter(x=>x.upc);
-  return json(res,200,{data:out});
-}
-async function krogerAuth(req,res){
-  if(req.method!=="GET") return json(res,405,{error:"Method not allowed."});
-  const state=crypto.randomBytes(24).toString("hex"),p=new URLSearchParams({scope:process.env.KROGER_SCOPES||"cart.basic:write product.compact profile.compact",response_type:"code",client_id:env("KROGER_CLIENT_ID"),redirect_uri:redirectUri(req),state});
-  return redirect(res,`${AUTHORIZE}?${p}`,{"Set-Cookie":cookie(STATE,state,600)});
-}
-async function callback(req,res){
-  const u=new URL(req.url,`https://${req.headers.host}`),c=parseCookies(req),code=u.searchParams.get("code"),state=u.searchParams.get("state"),error=u.searchParams.get("error");
-  if(error) return redirect(res,`/?kroger=error&message=${encodeURIComponent(error)}`,{"Set-Cookie":clear(STATE)});
-  if(!code||!state||state!==c[STATE]) return redirect(res,"/?kroger=error&message=Invalid%20OAuth%20state",{"Set-Cookie":clear(STATE)});
-  const basic=Buffer.from(`${env("KROGER_CLIENT_ID")}:${env("KROGER_CLIENT_SECRET")}`).toString("base64");
-  const r=await fetch(TOKEN,{method:"POST",headers:{Authorization:`Basic ${basic}`,"Content-Type":"application/x-www-form-urlencoded",Accept:"application/json"},body:new URLSearchParams({grant_type:"authorization_code",code,redirect_uri:redirectUri(req)})}),d=await r.json().catch(()=>({}));
-  if(!r.ok||!d.access_token) return redirect(res,`/?kroger=error&message=${encodeURIComponent(d.error_description||d.error||"Kroger authorization failed")}`,{"Set-Cookie":clear(STATE)});
-  const s={access_token:d.access_token,refresh_token:d.refresh_token||null,expires_at:Date.now()+Math.max(60,Number(d.expires_in||1800)-60)*1000};
-  return redirect(res,"/?kroger=connected",{"Set-Cookie":[cookie(SESSION,encrypt(s),2592000),clear(STATE)]});
-}
-async function cart(req,res){
-  if(req.method!=="PUT") return json(res,405,{error:"Method not allowed."});
-  const s=await userSession(req,res); if(!s) return json(res,401,{error:"Connect your Kroger account first."});
-  const b=await body(req),items=(Array.isArray(b.items)?b.items:[]).map(x=>({quantity:Math.max(1,Number(x.quantity||1)),upc:String(x.upc||""),modality:(String(x.modality||"PICKUP").toUpperCase()==="DELIVERY"?"DELIVERY":"PICKUP")})).filter(x=>/^\d{8,14}$/.test(x.upc));
-  if(!items.length) return json(res,400,{error:"No valid UPCs supplied."});
-  const r=await fetch(`${API}/cart/add`,{method:"PUT",headers:{Authorization:`Bearer ${s.access_token}`,"Content-Type":"application/json",Accept:"application/json"},body:JSON.stringify({items})}),text=await r.text();
-  if(!r.ok){
-    let d={};
-    try{d=JSON.parse(text)}catch{}
-    console.error("Kroger cart error",r.status,d||text);
-    return json(res,r.status,{error:errorText(d.errors||d),status:r.status,details:d.errors||d});
-  }
-  return json(res,200,{ok:true,count:items.length,cartUrl:"https://www.kroger.com/cart"});
-}
+async function krogerClientToken(){const basic=Buffer.from(`${env("KROGER_CLIENT_ID")}:${env("KROGER_CLIENT_SECRET")}`).toString("base64");const r=await fetch(TOKEN,{method:"POST",headers:{Authorization:`Basic ${basic}`,"Content-Type":"application/x-www-form-urlencoded",Accept:"application/json"},body:new URLSearchParams({grant_type:"client_credentials",scope:"product.compact"})});const d=await r.json().catch(()=>({}));if(!r.ok||!d.access_token)throw new Error(`Kroger client token failed (${r.status}): ${errorText(d)}`);return d.access_token}
+async function krogerUserSession(req,res){const s=unseal(parseCookies(req)[KROGER_SESSION]);if(!s)return null;if(s.expires_at&&Date.now()>=s.expires_at){if(!s.refresh_token){res.setHeader("Set-Cookie",clearCookie(KROGER_SESSION));return null}const basic=Buffer.from(`${env("KROGER_CLIENT_ID")}:${env("KROGER_CLIENT_SECRET")}`).toString("base64");const r=await fetch(TOKEN,{method:"POST",headers:{Authorization:`Basic ${basic}`,"Content-Type":"application/x-www-form-urlencoded",Accept:"application/json"},body:new URLSearchParams({grant_type:"refresh_token",refresh_token:s.refresh_token})});const d=await r.json().catch(()=>({}));if(!r.ok||!d.access_token){res.setHeader("Set-Cookie",clearCookie(KROGER_SESSION));return null}s={...s,access_token:d.access_token,refresh_token:d.refresh_token||s.refresh_token,expires_at:Date.now()+Math.max(60,Number(d.expires_in||1800)-60)*1000};res.setHeader("Set-Cookie",cookie(KROGER_SESSION,seal(s),2592000))}return s}
 
+async function stores(req,res){if(req.method!=="GET")return json(res,405,{error:"Method not allowed."});const u=new URL(req.url,`https://${req.headers.host}`),zip=u.searchParams.get("zip")||"";if(!/^\d{5}$/.test(zip))return json(res,400,{error:"A valid 5-digit ZIP code is required."});const token=await krogerClientToken(),p=new URLSearchParams({"filter.zipCode.near":zip,"filter.radiusInMiles":u.searchParams.get("radius")||"15","filter.limit":u.searchParams.get("limit")||"10"});const r=await fetch(`${API}/locations?${p}`,{headers:{Authorization:`Bearer ${token}`,Accept:"application/json"}}),d=await r.json().catch(()=>({}));if(!r.ok)return json(res,r.status,{error:errorText(d.errors||d)});return json(res,200,{data:(d.data||[]).map(x=>({id:x.locationId,name:x.name,chain:x.chain,address:x.address,modalities:x.modality||x.modalities||[]}))})}
+async function products(req,res){if(req.method!=="GET")return json(res,405,{error:"Method not allowed."});const u=new URL(req.url,`https://${req.headers.host}`),term=(u.searchParams.get("term")||"").trim(),locationId=(u.searchParams.get("locationId")||"").trim();if(!term||!locationId)return json(res,400,{error:"term and locationId are required."});const token=await krogerClientToken(),p=new URLSearchParams({"filter.term":term,"filter.locationId":locationId,"filter.limit":u.searchParams.get("limit")||"8"});const r=await fetch(`${API}/products?${p}`,{headers:{Authorization:`Bearer ${token}`,Accept:"application/json"}}),d=await r.json().catch(()=>({}));if(!r.ok)return json(res,r.status,{error:errorText(d.errors||d)});const out=(d.data||[]).map(x=>{const item=(x.items||[]).find(i=>i.price)||x.items?.[0]||{},price=item.price?.regular??item.price?.promo??null,im=(x.images||[]).find(i=>i.perspective==="front")||x.images?.[0];return{upc:x.upc,description:x.description||x.productDescription||"",brand:x.brand||"",price,image:im?.sizes?.[0]?.url||im?.url||""}}).filter(x=>x.upc);return json(res,200,{data:out})}
+async function krogerAuth(req,res){if(req.method!=="GET")return json(res,405,{error:"Method not allowed."});const state=crypto.randomBytes(24).toString("hex"),p=new URLSearchParams({scope:process.env.KROGER_SCOPES||"cart.basic:write product.compact profile.compact",response_type:"code",client_id:env("KROGER_CLIENT_ID"),redirect_uri:redirectUri(req),state});return redirect(res,`${AUTHORIZE}?${p}`,{"Set-Cookie":cookie(KROGER_STATE,state,600)})}
+async function krogerCallback(req,res){const u=new URL(req.url,`https://${req.headers.host}`),c=parseCookies(req),code=u.searchParams.get("code"),state=u.searchParams.get("state"),error=u.searchParams.get("error");if(error)return redirect(res,`/?kroger=error&message=${encodeURIComponent(error)}`,{"Set-Cookie":clearCookie(KROGER_STATE)});if(!code||!state||state!==c[KROGER_STATE])return redirect(res,"/?kroger=error&message=Invalid%20OAuth%20state",{"Set-Cookie":clearCookie(KROGER_STATE)});const basic=Buffer.from(`${env("KROGER_CLIENT_ID")}:${env("KROGER_CLIENT_SECRET")}`).toString("base64"),r=await fetch(TOKEN,{method:"POST",headers:{Authorization:`Basic ${basic}`,"Content-Type":"application/x-www-form-urlencoded",Accept:"application/json"},body:new URLSearchParams({grant_type:"authorization_code",code,redirect_uri:redirectUri(req)})}),d=await r.json().catch(()=>({}));if(!r.ok||!d.access_token)return redirect(res,`/?kroger=error&message=${encodeURIComponent(errorText(d))}`,{"Set-Cookie":clearCookie(KROGER_STATE)});const s={access_token:d.access_token,refresh_token:d.refresh_token||null,expires_at:Date.now()+Math.max(60,Number(d.expires_in||1800)-60)*1000};return redirect(res,"/?kroger=connected",{"Set-Cookie":[cookie(KROGER_SESSION,seal(s),2592000),clearCookie(KROGER_STATE)]})}
+async function cart(req,res){if(req.method!=="PUT")return json(res,405,{error:"Method not allowed."});const s=await krogerUserSession(req,res);if(!s)return json(res,401,{error:"Connect your Kroger account first."});const b=await body(req),items=(Array.isArray(b.items)?b.items:[]).map(x=>({quantity:Math.max(1,Number(x.quantity||1)),upc:String(x.upc||""),modality:(String(x.modality||"PICKUP").toUpperCase()==="DELIVERY"?"DELIVERY":"PICKUP")})).filter(x=>/^\d{8,14}$/.test(x.upc));if(!items.length)return json(res,400,{error:"No valid UPCs supplied."});const r=await fetch(`${API}/cart/add`,{method:"PUT",headers:{Authorization:`Bearer ${s.access_token}`,"Content-Type":"application/json",Accept:"application/json"},body:JSON.stringify({items})}),text=await r.text();if(!r.ok){let d={};try{d=JSON.parse(text)}catch{}return json(res,r.status,{error:errorText(d.errors||d),status:r.status,details:d.errors||d})}return json(res,200,{ok:true,count:items.length,cartUrl:"https://www.kroger.com/cart"})}
 
-async function aiMeal(req,res){
-  if(req.method!=="POST") return json(res,405,{error:"Method not allowed."});
-  if(!process.env.OPENAI_API_KEY) return json(res,503,{error:"AI meal generation is not configured yet. Add OPENAI_API_KEY in Vercel."});
-  const b=await body(req), preferences=Array.isArray(b.preferences)?b.preferences.slice(0,8):[], servings=Math.min(12,Math.max(1,Number(b.servings||2))), style=String(b.shoppingStyle||"value");
-  if(!preferences.length) return json(res,400,{error:"Choose at least one taste preference first."});
-  const schema={type:"object",additionalProperties:false,properties:{name:{type:"string"},description:{type:"string"},ingredients:{type:"array",items:{type:"object",additionalProperties:false,properties:{name:{type:"string"},amount:{type:"number"},unit:{type:"string"}},required:["name","amount","unit"]}},nutrition:{type:"object",additionalProperties:false,properties:{calories:{type:"number"},protein_g:{type:"number"},carbs_g:{type:"number"},fat_g:{type:"number"}},required:["calories","protein_g","carbs_g","fat_g"]},instructions:{type:"string"}},required:["name","description","ingredients","nutrition","instructions"]};
-  const prompt=`Create one practical home-cooked meal for ${servings} servings. Taste preferences: ${preferences.join(", ")}. Grocery matching preference: ${style}. Use ordinary grocery-store ingredients, no alcohol, and avoid medical/dietary claims. Give ingredient amounts already scaled for ${servings} servings. Nutrition must be a clearly labeled estimate per serving, not medical advice. Keep the recipe realistic and concise.`;
-  const r=await fetch("https://api.openai.com/v1/responses",{method:"POST",headers:{Authorization:`Bearer ${process.env.OPENAI_API_KEY}`,"Content-Type":"application/json"},body:JSON.stringify({model:process.env.OPENAI_MODEL||"gpt-5.6-luna",input:prompt,text:{format:{type:"json_schema",name:"cook_better_meal",strict:true,schema}}})});
-  const d=await r.json().catch(()=>({}));
-  if(!r.ok) return json(res,r.status,{error:d.error?.message||"AI provider request failed."});
-  let raw=d.output_text;
-  if(!raw && Array.isArray(d.output)) for(const item of d.output){for(const c of (item.content||[])){if(c.text){raw=c.text;break}}if(raw)break}
-  let meal;try{meal=JSON.parse(raw)}catch{return json(res,502,{error:"AI returned an invalid meal format."})}
-  return json(res,200,{meal});
+function supaBase(){return env("SUPABASE_URL").replace(/\/$/,"")}
+function supaHeaders(){return{apikey:env("SUPABASE_SERVICE_ROLE_KEY"),Authorization:`Bearer ${env("SUPABASE_SERVICE_ROLE_KEY")}`,"Content-Type":"application/json"}}
+async function supa(path,opts={}){const r=await fetch(`${supaBase()}${path}`,{...opts,headers:{...supaHeaders(),...(opts.headers||{})}});const text=await r.text();let d={};try{d=JSON.parse(text)}catch{d={raw:text}};if(!r.ok)throw new Error(errorText(d));return d}
+async function supaAuth(path,opts={}){const r=await fetch(`${supaBase()}${path}`,{...opts,headers:{apikey:env("SUPABASE_ANON_KEY"),"Content-Type":"application/json",...(opts.headers||{})}});const text=await r.text();let d={};try{d=JSON.parse(text)}catch{d={raw:text}};return{ok:r.ok,status:r.status,data:d}}
+function accountCookie(value){return cookie(ACCOUNT_SESSION,value,2592000)}
+function accountSession(req){return unseal(parseCookies(req)[ACCOUNT_SESSION])}
+async function accountUser(req,res){let s=accountSession(req);if(!s?.access_token)return null;let r=await fetch(`${supaBase()}/auth/v1/user`,{headers:{apikey:env("SUPABASE_ANON_KEY"),Authorization:`Bearer ${s.access_token}`}});if(!r.ok&&s.refresh_token){const refreshed=await supaAuth("/auth/v1/token?grant_type=refresh_token",{method:"POST",body:JSON.stringify({refresh_token:s.refresh_token})});if(refreshed.ok&&refreshed.data.access_token){s={access_token:refreshed.data.access_token,refresh_token:refreshed.data.refresh_token||s.refresh_token};res.setHeader("Set-Cookie",accountCookie(seal(s)));r=await fetch(`${supaBase()}/auth/v1/user`,{headers:{apikey:env("SUPABASE_ANON_KEY"),Authorization:`Bearer ${s.access_token}`}})}}if(!r.ok)return null;return await r.json().catch(()=>null)}
+async function profileFor(userId){const rows=await supa(`/rest/v1/profiles?id=eq.${encodeURIComponent(userId)}&select=*`,{method:"GET"});return rows[0]||null}
+async function ensureProfile(user,name,email){let p=await profileFor(user.id);if(!p){const rows=await supa("/rest/v1/profiles",{method:"POST",headers:{Prefer:"return=representation"},body:JSON.stringify({id:user.id,name:name||user.user_metadata?.full_name||email?.split("@")[0]||"Cook",email:email||user.email,points:0,taste_preferences:[],shopping_style:"value",tried_recipes:[],meals_cooked:0})});p=rows[0]}return p}
+function publicProfile(p){return{id:p.id,name:p.name,email:p.email,points:Number(p.points||0),taste_preferences:p.taste_preferences||[],shopping_style:p.shopping_style||"value",tried_recipes:p.tried_recipes||[],meals_cooked:Number(p.meals_cooked||0)}}
+async function signup(req,res){const b=await body(req),name=String(b.name||"").trim(),email=String(b.email||"").trim().toLowerCase(),password=String(b.password||"");if(name.length<2)return json(res,400,{error:"Enter your name."});if(!/^\S+@\S+\.\S+$/.test(email))return json(res,400,{error:"Enter a valid email."});if(password.length<8)return json(res,400,{error:"Password must be at least 8 characters."});const a=await supaAuth("/auth/v1/signup",{method:"POST",body:JSON.stringify({email,password,data:{full_name:name}})});if(!a.ok)return json(res,a.status,{error:errorText(a.data)});if(!a.data.access_token)return json(res,200,{needsEmailConfirmation:true,message:"Check your email to confirm your account, then sign in."});const p=await ensureProfile(a.data.user,name,email);return json(res,200,{customer:publicProfile(p)},{"Set-Cookie":accountCookie(seal({access_token:a.data.access_token,refresh_token:a.data.refresh_token||null}))})}
+async function login(req,res){const b=await body(req),email=String(b.email||"").trim().toLowerCase(),password=String(b.password||"");const a=await supaAuth("/auth/v1/token?grant_type=password",{method:"POST",body:JSON.stringify({email,password})});if(!a.ok||!a.data.access_token)return json(res,401,{error:errorText(a.data)||"Email or password is incorrect."});const p=await ensureProfile(a.data.user,a.data.user.user_metadata?.full_name,email);return json(res,200,{customer:publicProfile(p)},{"Set-Cookie":accountCookie(seal({access_token:a.data.access_token,refresh_token:a.data.refresh_token||null}))})}
+async function me(req,res){const u=await accountUser(req,res);if(!u)return json(res,200,{loggedIn:false});const p=await ensureProfile(u,u.user_metadata?.full_name,u.email);return json(res,200,{loggedIn:true,customer:publicProfile(p)})}
+async function logout(req,res){return json(res,200,{ok:true},{"Set-Cookie":clearCookie(ACCOUNT_SESSION)})}
+async function updateProfile(req,res){const u=await accountUser(req,res);if(!u)return json(res,401,{error:"Sign in first."});const b=await body(req),patch={};if(typeof b.name==="string"&&b.name.trim())patch.name=b.name.trim().slice(0,80);if(Array.isArray(b.taste_preferences))patch.taste_preferences=b.taste_preferences.slice(0,8).map(String);if(typeof b.shopping_style==="string")patch.shopping_style=b.shopping_style.slice(0,30);if(!Object.keys(patch).length)return json(res,400,{error:"No profile changes supplied."});const rows=await supa(`/rest/v1/profiles?id=eq.${encodeURIComponent(u.id)}`,{method:"PATCH",headers:{Prefer:"return=representation"},body:JSON.stringify(patch)});return json(res,200,{customer:publicProfile(rows[0])})}
+async function award(req,res){const u=await accountUser(req,res);if(!u)return json(res,401,{error:"Sign in first."});const b=await body(req),action=String(b.action||""),p=await ensureProfile(u,u.user_metadata?.full_name,u.email);if(action==="recipe"){const id=String(b.recipeId||"");if(!id)return json(res,400,{error:"recipeId is required."});const tried=new Set(p.tried_recipes||[]);if(tried.has(id))return json(res,200,{customer:publicProfile(p),awarded:0});const newPoints=await supa("/rest/v1/rpc/award_reward",{method:"POST",body:JSON.stringify({p_user_id:u.id,p_action:"recipe",p_points:10,p_reference:id})});const rows=await supa(`/rest/v1/profiles?id=eq.${encodeURIComponent(u.id)}`,{method:"PATCH",headers:{Prefer:"return=representation"},body:JSON.stringify({tried_recipes:[...tried,id]})});return json(res,200,{customer:publicProfile(rows[0]),awarded:Number(newPoints)-Number(p.points||0)})}
+if(action==="meal"){const cooked=Number(p.meals_cooked||0)+1;const patch={meals_cooked:cooked};let awarded=0;if(cooked%5===0){const newPoints=await supa("/rest/v1/rpc/award_reward",{method:"POST",body:JSON.stringify({p_user_id:u.id,p_action:"meal5",p_points:50,p_reference:`meal-${cooked}`})});awarded=Math.max(0,Number(newPoints)-Number(p.points||0));patch.points=Number(newPoints)}const rows=await supa(`/rest/v1/profiles?id=eq.${encodeURIComponent(u.id)}`,{method:"PATCH",headers:{Prefer:"return=representation"},body:JSON.stringify(patch)});return json(res,200,{customer:publicProfile(rows[0]),awarded})}
+if(action==="monthly"){const month=new Date().toISOString().slice(0,7);const newPoints=await supa("/rest/v1/rpc/award_reward",{method:"POST",body:JSON.stringify({p_user_id:u.id,p_action:"monthly",p_points:100,p_reference:month})});const rows=await supa(`/rest/v1/profiles?id=eq.${encodeURIComponent(u.id)}`,{method:"GET"});return json(res,200,{customer:publicProfile(rows[0]),awarded:Math.max(0,Number(newPoints)-Number(p.points||0))})}
+return json(res,400,{error:"Invalid reward action."})}
+async function internalOrderReward(req,res){if(req.method!=="POST")return json(res,405,{error:"Method not allowed."});if(!process.env.ORDER_VERIFICATION_SECRET)return json(res,503,{error:"Order verification is not configured."});const b=await body(req),secret=req.headers["x-order-verification-secret"];if(!secret||secret!==process.env.ORDER_VERIFICATION_SECRET)return json(res,403,{error:"Forbidden."});const userId=String(b.userId||""),reference=String(b.orderId||b.referenceId||"");if(!userId||!reference)return json(res,400,{error:"userId and orderId are required."});const p=await profileFor(userId);if(!p)return json(res,404,{error:"Account not found."});const newPoints=await supa("/rest/v1/rpc/award_reward",{method:"POST",body:JSON.stringify({p_user_id:userId,p_action:"order",p_points:25,p_reference:reference})});const fresh=await profileFor(userId);return json(res,200,{customer:publicProfile(fresh),awarded:Math.max(0,Number(newPoints)-Number(p.points||0))})}
+
+function mealSchema(){return{type:"object",additionalProperties:false,properties:{name:{type:"string"},description:{type:"string"},category:{type:"string"},skillLevel:{type:"string",enum:["Beginner","Intermediate","Advanced"]},prepMinutes:{type:"number"},cookMinutes:{type:"number"},ingredients:{type:"array",items:{type:"object",additionalProperties:false,properties:{name:{type:"string"},amount:{type:"number"},unit:{type:"string"},searchTerm:{type:"string"}},required:["name","amount","unit","searchTerm"]}},nutrition:{type:"object",additionalProperties:false,properties:{calories:{type:"number"},protein_g:{type:"number"},carbs_g:{type:"number"},fat_g:{type:"number"}},required:["calories","protein_g","carbs_g","fat_g"]},instructions:{type:"array",items:{type:"string"}},tips:{type:"array",items:{type:"string"}},substitutions:{type:"array",items:{type:"string"}}},required:["name","description","category","skillLevel","prepMinutes","cookMinutes","ingredients","nutrition","instructions","tips","substitutions"]}}
+async function callOpenAI(prompt){
+ if(!process.env.OPENAI_API_KEY)throw new Error("AI is not configured. Add OPENAI_API_KEY in Vercel.");
+ const payload={
+  model:process.env.OPENAI_MODEL||"gpt-5.6-luna",
+  input:prompt,
+  text:{format:{type:"json_schema",name:"cook_better_recipe",strict:true,schema:mealSchema()}}
+ };
+ const r=await fetch("https://api.openai.com/v1/responses",{method:"POST",headers:{Authorization:`Bearer ${process.env.OPENAI_API_KEY}`,"Content-Type":"application/json"},body:JSON.stringify(payload)});
+ const d=await r.json().catch(()=>({}));
+ if(!r.ok)throw new Error(d.error?.message||"OpenAI request failed.");
+ let raw=d.output_text;
+ if(!raw&&Array.isArray(d.output))for(const item of d.output)for(const c of (item.content||[]))if(c.text){raw=c.text;break}
+ if(!raw)throw new Error("AI returned no recipe.");
+ try{return JSON.parse(raw)}catch{throw new Error("AI returned an invalid recipe format.")}
 }
+async function aiMeal(req,res){if(req.method!=="POST")return json(res,405,{error:"Method not allowed."});const b=await body(req),prefs=Array.isArray(b.preferences)?b.preferences.slice(0,8):[],servings=Math.min(12,Math.max(1,Number(b.servings||2))),style=String(b.shoppingStyle||"value");if(!prefs.length)return json(res,400,{error:"Choose at least one taste preference first."});try{const meal=await callOpenAI(`You are Cook Better Co.'s recipe developer. Create a genuinely cookable home recipe for ${servings} servings. Taste preferences: ${prefs.join(", ")}. Grocery preference: ${style}. Prioritize normal U.S. grocery-store ingredients, realistic package sizes, strong flavor, clear technique, and a recipe that can be taught. Avoid alcohol and medical/diet claims. Do not invent impossible quantities. Include concise numbered instructions, practical tips, substitutions, and estimated nutrition per serving. Every ingredient needs a useful plain-English searchTerm for a grocery product search.`);return json(res,200,{meal})}catch(e){return json(res,502,{error:e.message})}}
+async function aiImprove(req,res){if(req.method!=="POST")return json(res,405,{error:"Method not allowed."});const b=await body(req);try{const meal=await callOpenAI(`You are Cook Better Co.'s senior recipe developer. Improve this recipe without making it complicated. Keep the same core dish, but fix weak ingredient choices, improve flavor balance and cooking technique, make quantities realistic for ${Number(b.servings||4)} servings, and make the instructions teach the cook what to look for. Return the complete improved recipe in the required schema. Original recipe: ${JSON.stringify(b.recipe||{})}`);return json(res,200,{meal})}catch(e){return json(res,502,{error:e.message})}}
 
-module.exports=async function(req,res){
-  try{
-    const r=route(req);
-    if(r==="stores") return stores(req,res);
-    if(r==="products") return products(req,res);
-    if(r==="auth/kroger") return krogerAuth(req,res);
-    if(r==="auth/kroger/callback") return callback(req,res);
-    if(r==="auth/status"){ if(req.method!=="GET") return json(res,405,{error:"Method not allowed."}); return json(res,200,{connected:!!(await userSession(req,res))}); }
-    if(r==="auth/logout"){ if(req.method!=="POST") return json(res,405,{error:"Method not allowed."}); return json(res,200,{ok:true},{"Set-Cookie":clear(SESSION)}); }
-    if(r==="cart/add") return cart(req,res);
-    if(r==="ai/meal") return aiMeal(req,res);
-    return json(res,404,{error:"API route not found."});
-  }catch(e){ console.error(e); return json(res,500,{error:e.message||"Server error."}); }
-};
+module.exports=async function(req,res){try{const r=route(req);if(r==="stores")return stores(req,res);if(r==="products")return products(req,res);if(r==="auth/kroger")return krogerAuth(req,res);if(r==="auth/kroger/callback")return krogerCallback(req,res);if(r==="auth/status")return json(res,200,{connected:!!(await krogerUserSession(req,res))});if(r==="auth/logout")return logoutKroger(req,res);if(r==="cart/add")return cart(req,res);if(r==="account/signup")return signup(req,res);if(r==="account/login")return login(req,res);if(r==="account/me")return me(req,res);if(r==="account/logout")return logout(req,res);if(r==="account/profile")return updateProfile(req,res);if(r==="rewards/award")return award(req,res);if(r==="rewards/order-completed")return internalOrderReward(req,res);if(r==="ai/meal")return aiMeal(req,res);if(r==="ai/improve")return aiImprove(req,res);return json(res,404,{error:"API route not found."})}catch(e){console.error(e);return json(res,500,{error:e.message||"Server error."})}}
+async function logoutKroger(req,res){if(req.method!=="POST")return json(res,405,{error:"Method not allowed."});return json(res,200,{ok:true},{"Set-Cookie":clearCookie(KROGER_SESSION)})}
