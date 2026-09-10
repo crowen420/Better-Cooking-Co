@@ -102,6 +102,23 @@ async function cart(req,res){
   return json(res,200,{ok:true,count:items.length,cartUrl:"https://www.kroger.com/cart"});
 }
 
+
+async function aiMeal(req,res){
+  if(req.method!=="POST") return json(res,405,{error:"Method not allowed."});
+  if(!process.env.OPENAI_API_KEY) return json(res,503,{error:"AI meal generation is not configured yet. Add OPENAI_API_KEY in Vercel."});
+  const b=await body(req), preferences=Array.isArray(b.preferences)?b.preferences.slice(0,8):[], servings=Math.min(12,Math.max(1,Number(b.servings||2))), style=String(b.shoppingStyle||"value");
+  if(!preferences.length) return json(res,400,{error:"Choose at least one taste preference first."});
+  const schema={type:"object",additionalProperties:false,properties:{name:{type:"string"},description:{type:"string"},ingredients:{type:"array",items:{type:"object",additionalProperties:false,properties:{name:{type:"string"},amount:{type:"number"},unit:{type:"string"}},required:["name","amount","unit"]}},nutrition:{type:"object",additionalProperties:false,properties:{calories:{type:"number"},protein_g:{type:"number"},carbs_g:{type:"number"},fat_g:{type:"number"}},required:["calories","protein_g","carbs_g","fat_g"]},instructions:{type:"string"}},required:["name","description","ingredients","nutrition","instructions"]};
+  const prompt=`Create one practical home-cooked meal for ${servings} servings. Taste preferences: ${preferences.join(", ")}. Grocery matching preference: ${style}. Use ordinary grocery-store ingredients, no alcohol, and avoid medical/dietary claims. Give ingredient amounts already scaled for ${servings} servings. Nutrition must be a clearly labeled estimate per serving, not medical advice. Keep the recipe realistic and concise.`;
+  const r=await fetch("https://api.openai.com/v1/responses",{method:"POST",headers:{Authorization:`Bearer ${process.env.OPENAI_API_KEY}`,"Content-Type":"application/json"},body:JSON.stringify({model:process.env.OPENAI_MODEL||"gpt-5.6-luna",input:prompt,text:{format:{type:"json_schema",name:"cook_better_meal",strict:true,schema}}})});
+  const d=await r.json().catch(()=>({}));
+  if(!r.ok) return json(res,r.status,{error:d.error?.message||"AI provider request failed."});
+  let raw=d.output_text;
+  if(!raw && Array.isArray(d.output)) for(const item of d.output){for(const c of (item.content||[])){if(c.text){raw=c.text;break}}if(raw)break}
+  let meal;try{meal=JSON.parse(raw)}catch{return json(res,502,{error:"AI returned an invalid meal format."})}
+  return json(res,200,{meal});
+}
+
 module.exports=async function(req,res){
   try{
     const r=route(req);
@@ -112,6 +129,7 @@ module.exports=async function(req,res){
     if(r==="auth/status"){ if(req.method!=="GET") return json(res,405,{error:"Method not allowed."}); return json(res,200,{connected:!!(await userSession(req,res))}); }
     if(r==="auth/logout"){ if(req.method!=="POST") return json(res,405,{error:"Method not allowed."}); return json(res,200,{ok:true},{"Set-Cookie":clear(SESSION)}); }
     if(r==="cart/add") return cart(req,res);
+    if(r==="ai/meal") return aiMeal(req,res);
     return json(res,404,{error:"API route not found."});
   }catch(e){ console.error(e); return json(res,500,{error:e.message||"Server error."}); }
 };
