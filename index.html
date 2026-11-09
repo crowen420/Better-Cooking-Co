@@ -20,24 +20,25 @@
 @media(max-width:1050px){.devRecipeRow{grid-template-columns:28px 80px 1fr!important}.devRecipeRow>div:nth-child(4){grid-column:2/-1}.devRecipeRow .devActions{grid-column:2/-1}}
 @media(max-width:650px){.devRecipeRow{grid-template-columns:28px 1fr!important}.devRecipeRow>img{grid-column:2;width:100%;height:150px}.devRecipeRow>div:nth-child(2){grid-column:2}.devRecipeRow>div:nth-child(4),.devRecipeRow .devActions{grid-column:2}.devToolbar{align-items:flex-start}.paywallUnlock{position:relative;inset:auto;margin-top:-130px;padding-top:145px;min-height:230px}.subscriptionPage{padding:55px 5%}}
 
-/* Cook Better Co. product redesign — calm, editorial, app-first */
-:root{--bg:#f5f4ef;--panel:#fff;--panel2:#f7f8f5;--gold:#b87535;--orange:#bd6b3e;--text:#202820;--muted:#68736b;--line:#e3e7df;--green:#397b55;--red:#b94b43;--shadow:0 14px 38px rgba(31,45,34,.08)}
-body{background:#f5f4ef;color:#202820;background-image:none}
-.nav{height:72px;background:rgba(255,255,255,.94);border-bottom:1px solid #e5e8e1;box-shadow:0 3px 18px rgba(25,35,28,.04)}
-.brand img{filter:none}.brandWords strong{color:#26352a}.brandWords strong span,.accent{color:#a86632}
-.navlinks a{color:#47534a}.navlinks a:hover{color:#a86632}
-.btn{border-radius:10px;box-shadow:none}.primary{background:#315d43;color:#fff;box-shadow:none}.primary:hover{background:#244b35}.secondary{background:#fff;color:#334238;border:1px solid #dce3da}.ghost{color:#46534a;border-color:#dce3da}
-.hero{min-height:510px;background-color:#26382c;background-image:linear-gradient(90deg,rgba(20,36,26,.92),rgba(20,36,26,.58) 55%,rgba(20,36,26,.12));border-radius:0 0 26px 26px}
-.heroContent{max-width:1240px;padding:88px 5%}.hero h1{font-size:clamp(42px,6vw,72px);letter-spacing:-.045em}.hero h1 span{color:#e8bd8d}.hero p{max-width:570px;color:#e2e9e1;font-size:18px;line-height:1.65}
-.eyebrow{color:#a86632;letter-spacing:.16em}.hero .eyebrow{color:#e8bd8d}
-.featureStrip{max-width:1240px;margin:22px auto 0;padding:12px 24px;background:#fff;border:1px solid #e5e8e1;border-radius:16px;box-shadow:0 8px 24px rgba(31,45,34,.04)}
-.feature{padding:16px}.panel,.recipe,.lesson,.detailCard,.planningGate,.planningIntro{background:#fff;border:1px solid #e4e8e1;box-shadow:0 8px 28px rgba(31,45,34,.045);border-radius:16px}
-.recipe{overflow:hidden}.recipeBody{padding:22px}.recipeBody h3{color:#25352a}.tag{background:#f1f4ef;color:#536457;border:1px solid #e4e9e2}
-.builderGrid{gap:22px}.panel{padding:24px}.field input,.field select,.field textarea,input,select,textarea{border-color:#dce3da;border-radius:9px;background:#fff;color:#26352a}.field label{color:#34443a}.muted,.fieldHint{color:#778178}.fieldHint{display:block;margin-top:6px;font-size:12px}
-.total{background:#f1f5ef;border:1px solid #dfe8dc;color:#294332;border-radius:12px}
-.moreRecipesMenu{background:#fff;border:1px solid #e4e8e1;border-radius:14px;padding:18px}
-.planningStart{padding-top:34px;padding-bottom:26px}.planningIntro{display:flex;justify-content:space-between;gap:30px;align-items:center;padding:28px 30px;border-radius:16px 16px 0 0;border-bottom:0}.planningIntro h2{font-size:clamp(27px,3vw,38px);margin:8px 0}.planningIntro p{max-width:590px;color:#6d786f;line-height:1.6;margin:0}.planningSteps{display:flex;gap:18px;flex-wrap:wrap}.planningStep{display:flex;align-items:center;gap:8px;color:#536257;font-size:13px;font-weight:750}.planningStep b{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:#eef3ed;color:#3e6749;font-size:11px}.planningGate{display:grid;grid-template-columns:1fr 1fr auto;gap:18px;align-items:center;padding:20px 30px;border-radius:0 0 16px 16px;border-top:1px solid #edf0eb}.gateStatus{display:flex;align-items:center;gap:11px}.gateStatus strong,.gateStatus small{display:block}.gateStatus strong{font-size:14px;color:#2e4034}.gateStatus small{font-size:12px;color:#778178;margin-top:4px}.gateDot{width:10px;height:10px;border-radius:50%;background:#c7cec6;flex:none}.gateDot.ready{background:#43845a;box-shadow:0 0 0 4px #eaf3eb}.equipmentTag{background:#f4f0e9;color:#8a613d;border-color:#eee4d7}
-@media(max-width:800px){.planningIntro{display:block;padding:22px}.planningSteps{margin-top:20px}.planningGate{grid-template-columns:1fr;padding:20px}.planningGate .btn{width:100%}.hero{min-height:440px}.heroContent{padding:68px 7%}.featureStrip{margin:14px 12px 0;display:grid;grid-template-columns:1fr 1fr}.section{padding:38px 16px}.nav{padding:8px 14px}.brand{min-width:0}.brand img{width:48px;height:48px}}
+
+/* V14: original Cook Better Co. dark charcoal + orange visual identity.
+   These styles only support the added planning gate and equipment metadata. */
+.planningStart{padding-top:34px;padding-bottom:26px}
+.planningIntro{display:flex;justify-content:space-between;gap:30px;align-items:center;padding:28px 30px;background:var(--panel);border:1px solid var(--line);border-radius:16px 16px 0 0;border-bottom:0}
+.planningIntro h2{font-size:clamp(27px,3vw,38px);margin:8px 0;color:var(--text)}
+.planningIntro p{max-width:590px;color:var(--muted);line-height:1.6;margin:0}
+.planningSteps{display:flex;gap:18px;flex-wrap:wrap}
+.planningStep{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px;font-weight:750}
+.planningStep b{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:#21180e;color:var(--gold);font-size:11px;border:1px solid #49351b}
+.planningGate{display:grid;grid-template-columns:1fr 1fr auto;gap:18px;align-items:center;padding:20px 30px;background:var(--panel);border:1px solid var(--line);border-radius:0 0 16px 16px;border-top:1px solid var(--line)}
+.gateStatus{display:flex;align-items:center;gap:11px}
+.gateStatus strong,.gateStatus small{display:block}
+.gateStatus strong{font-size:14px;color:var(--text)}
+.gateStatus small{font-size:12px;color:var(--muted);margin-top:4px}
+.gateDot{width:10px;height:10px;border-radius:50%;background:#555b60;flex:none}
+.gateDot.ready{background:var(--green);box-shadow:0 0 0 4px rgba(54,201,120,.12)}
+.equipmentTag{background:#21180e;color:var(--gold);border-color:#49351b}
+@media(max-width:800px){.planningIntro{display:block;padding:22px}.planningSteps{margin-top:20px}.planningGate{grid-template-columns:1fr;padding:20px}.planningGate .btn{width:100%}}
 </style>
 </head>
 <body>
