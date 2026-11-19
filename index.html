@@ -262,29 +262,55 @@ const tasteImages={Smoky:"https://images.unsplash.com/photo-1527477396000-e27163
 const $=id=>document.getElementById(id);function esc(x){return String(x??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}function status(msg,type=""){$("status").textContent=msg;$('status').className="status "+type}function closeModal(id){$(id)?.classList.remove("open")}function openModal(id){$(id)?.classList.add("open")}
 function showHome(){if($('techniqueLibrary'))$('techniqueLibrary').style.display='none';document.body.classList.remove("recipe-view");$('homeMain').classList.remove('hidden');$('recipePage').classList.remove('open');$('accountPage').classList.remove('open');$('shop').classList.remove('open');$('developerPage')?.classList.remove('open');$('subscriptionPage')?.classList.remove('open');window.scrollTo({top:0,behavior:'smooth'})}
 
-const siteDefaults={heroEyebrow:"COOK BETTER STARTS IN YOUR KITCHEN",heroTitle:"Learn to Cook.",heroHighlight:"One Meal at a Time.",heroDescription:"Build real kitchen skills with approachable recipes, step-by-step instructions, and technique videos. Choose what you want to learn, practice at your own pace, and get the ingredients you need from Kroger.",heroCta:"Create your free account",heroImage:"",logoImage:"",accentColor:"#ffb52e",orangeColor:"#ff6b16",recipesTitle:"Recipes. Built Better.",recipesDescription:"Choose a dish, learn the technique, and build confidence one meal at a time.",spotlightTitle:"In the Spotlight",spotlightDescription:"Featured recipes and lessons selected by Cook Better Co.",footerTagline:"Better food. Better you.",feature1Title:"Quick & Easy",feature1Text:"Recipes made for real life.",feature2Title:"Cook With Confidence",feature2Text:"Technique, timing, and why.",feature3Title:"Grocery Lists",feature3Text:"Shop at your Kroger.",feature4Title:"Learn & Improve",feature4Text:"Build real cooking skills.",showFeatureStrip:true,showPlanningStart:true,showSpotlightSection:true,showRecipeSection:true};
+const siteDefaults={heroEyebrow:"COOK BETTER STARTS IN YOUR KITCHEN",heroTitle:"Learn to Cook.",heroHighlight:"One Meal at a Time.",heroDescription:"Build real kitchen skills with approachable recipes, step-by-step instructions, and technique videos. Choose what you want to learn, practice at your own pace, and get the ingredients you need from Kroger.",heroCta:"Create your free account",heroImage:"",heroMediaUrl:"",heroMediaType:"none",logoImage:"",logoAnimationUrl:"",accentColor:"#ffb52e",orangeColor:"#ff6b16",recipesTitle:"Recipes. Built Better.",recipesDescription:"Choose a dish, learn the technique, and build confidence one meal at a time.",spotlightTitle:"In the Spotlight",spotlightDescription:"Featured recipes and lessons selected by Cook Better Co.",footerTagline:"Better food. Better you.",feature1Title:"Quick & Easy",feature1Text:"Recipes made for real life.",feature2Title:"Cook With Confidence",feature2Text:"Technique, timing, and why.",feature3Title:"Grocery Lists",feature3Text:"Shop at your Kroger.",feature4Title:"Learn & Improve",feature4Text:"Build real cooking skills.",showFeatureStrip:true,showPlanningStart:true,showSpotlightSection:true,showRecipeSection:true};
 let currentSiteContent={...siteDefaults};
 function setSiteText(id,value){const el=$(id);if(el)el.textContent=value||""}
 function applySiteContent(values){
  currentSiteContent={...siteDefaults,...(values||{})};
  const c=currentSiteContent;
- setSiteText("heroEyebrow",c.heroEyebrow);const title=$("heroTitle");if(title)title.innerHTML=esc(c.heroTitle||"Learn to Cook.")+"<br><span id=\"heroTitleHighlight\">"+esc(c.heroHighlight||"One Meal at a Time.")+"</span>";setSiteText("heroDescription",c.heroDescription);setSiteText("heroPrimaryCta",c.heroCta);
- setSiteText("recipesHeading",c.recipesTitle);setSiteText("recipesDescription",c.recipesDescription);setSiteText("spotlightHeading",c.spotlightTitle);setSiteText("spotlightDescription",c.spotlightDescription);setSiteText("footerTagline",c.footerTagline);
+ setSiteText("heroEyebrow",c.heroEyebrow);
+ const title=$("heroTitle");
+ if(title)title.innerHTML=esc(c.heroTitle||"Learn to Cook.")+"<br><span id=\"heroTitleHighlight\">"+esc(c.heroHighlight||"One Meal at a Time.")+"</span>";
+ setSiteText("heroDescription",c.heroDescription);setSiteText("heroPrimaryCta",c.heroCta);
+ setSiteText("recipesHeading",c.recipesTitle);setSiteText("recipesDescription",c.recipesDescription);
+ setSiteText("spotlightHeading",c.spotlightTitle);setSiteText("spotlightDescription",c.spotlightDescription);setSiteText("footerTagline",c.footerTagline);
  window.cbSpotlightTitle=c.spotlightTitle;window.cbSpotlightDescription=c.spotlightDescription;
- const hero=$("top");if(hero)hero.style.backgroundImage=c.heroImage?'linear-gradient(90deg,rgba(0,0,0,.94),rgba(0,0,0,.68) 45%,rgba(0,0,0,.16)),url("'+c.heroImage.replace(/"/g,"%22")+'")':"";
- const logoSrc=c.logoImage||"/assets/main-logo.png";if($("logo"))$("logo").src=logoSrc;if($("footerLogo"))$("footerLogo").src=logoSrc;
- document.documentElement.style.setProperty("--gold",c.accentColor||siteDefaults.accentColor);document.documentElement.style.setProperty("--orange",c.orangeColor||siteDefaults.orangeColor);
- const features=$("featureStrip");if(features){features.style.display=c.showFeatureStrip===false?"none":"";const nodes=features.querySelectorAll(".feature");for(let i=0;i<4;i++){const n=nodes[i];if(n){const title=n.querySelector("strong"),small=n.querySelector("small");if(title)title.textContent=c["feature"+(i+1)+"Title"]||"";if(small)small.textContent=c["feature"+(i+1)+"Text"]||""}}}
+ const hero=$("top"),video=$("heroBackgroundVideo");
+ const mediaUrl=c.heroMediaUrl||"",type=c.heroMediaType||"none",reduceMotion=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+ const fallback=c.heroImage||"";
+ if(video){
+  if(type==="video"&&mediaUrl&&!reduceMotion){
+   if(video.src!==mediaUrl)video.src=mediaUrl;
+   video.poster=fallback;video.hidden=false;video.muted=true;video.loop=true;video.autoplay=true;video.playsInline=true;
+   const play=video.play();if(play&&play.catch)play.catch(()=>{video.hidden=true});
+  }else{
+   video.pause();video.removeAttribute("src");video.load();video.hidden=true;
+  }
+ }
+ if(hero){
+  const backgroundUrl=type==="gif"||type==="image"?mediaUrl:(type==="video"&&reduceMotion?fallback:fallback);
+  hero.style.backgroundImage=backgroundUrl?'linear-gradient(90deg,rgba(0,0,0,.94),rgba(0,0,0,.68) 45%,rgba(0,0,0,.16)),url("'+backgroundUrl.replace(/"/g,"%22")+'")':"";
+ }
+ const logoSrc=c.logoImage||"/assets/main-logo.png";
+ if($("logo"))$("logo").src=logoSrc;if($("footerLogo"))$("footerLogo").src=logoSrc;
+ const hover=$("logoHoverGif");if(hover){if(c.logoAnimationUrl){hover.src=c.logoAnimationUrl;hover.hidden=false}else{hover.removeAttribute("src");hover.hidden=true}}
+ document.documentElement.style.setProperty("--gold",c.accentColor||siteDefaults.accentColor);
+ document.documentElement.style.setProperty("--orange",c.orangeColor||siteDefaults.orangeColor);
+ const features=$("featureStrip");
+ if(features){features.style.display=c.showFeatureStrip===false?"none":"";const nodes=features.querySelectorAll(".feature");for(let i=0;i<4;i++){const n=nodes[i];if(n){const title=n.querySelector("strong"),small=n.querySelector("small");if(title)title.textContent=c["feature"+(i+1)+"Title"]||"";if(small)small.textContent=c["feature"+(i+1)+"Text"]||""}}}
  if($("planningStart"))$("planningStart").style.display=c.showPlanningStart===false?"none":"";
  if($("spotlightSection"))$("spotlightSection").style.display=c.showSpotlightSection===false?"none":($("spotlightGrid")?.children.length?"block":"none");
  if($("recipes"))$("recipes").style.display=c.showRecipeSection===false?"none":"";
 }
 function fillSiteEditor(c){
- const map={heroEyebrow:"siteHeroEyebrow",heroTitle:"siteHeroTitle",heroHighlight:"siteHeroHighlight",heroDescription:"siteHeroDescription",heroCta:"siteHeroCta",heroImage:"siteHeroImageUrl",logoImage:"siteLogoImageUrl",accentColor:"siteAccentColor",orangeColor:"siteOrangeColor",recipesTitle:"siteRecipesTitle",recipesDescription:"siteRecipesDescription",spotlightTitle:"siteSpotlightTitle",spotlightDescription:"siteSpotlightDescription",footerTagline:"siteFooterTagline",feature1Title:"siteFeature1Title",feature1Text:"siteFeature1Text",feature2Title:"siteFeature2Title",feature2Text:"siteFeature2Text",feature3Title:"siteFeature3Title",feature3Text:"siteFeature3Text",feature4Title:"siteFeature4Title",feature4Text:"siteFeature4Text"};
+ const map={heroEyebrow:"siteHeroEyebrow",heroTitle:"siteHeroTitle",heroHighlight:"siteHeroHighlight",heroDescription:"siteHeroDescription",heroCta:"siteHeroCta",heroImage:"siteHeroImageUrl",heroMediaUrl:"siteHeroMediaUrl",heroMediaType:"siteHeroMediaType",logoImage:"siteLogoImageUrl",logoAnimationUrl:"siteLogoAnimationUrl",accentColor:"siteAccentColor",orangeColor:"siteOrangeColor",recipesTitle:"siteRecipesTitle",recipesDescription:"siteRecipesDescription",spotlightTitle:"siteSpotlightTitle",spotlightDescription:"siteSpotlightDescription",footerTagline:"siteFooterTagline",feature1Title:"siteFeature1Title",feature1Text:"siteFeature1Text",feature2Title:"siteFeature2Title",feature2Text:"siteFeature2Text",feature3Title:"siteFeature3Title",feature3Text:"siteFeature3Text",feature4Title:"siteFeature4Title",feature4Text:"siteFeature4Text"};
  for(const [key,id] of Object.entries(map))if($(id))$(id).value=c[key]??siteDefaults[key]??"";
  $("siteShowFeatures").checked=c.showFeatureStrip!==false;$("siteShowPlanning").checked=c.showPlanningStart!==false;$("siteShowSpotlight").checked=c.showSpotlightSection!==false;$("siteShowRecipes").checked=c.showRecipeSection!==false;
- if(c.heroImage){$("siteHeroImagePreview").src=c.heroImage;$("siteHeroImagePreview").hidden=false}
- if(c.logoImage){$("siteLogoImagePreview").src=c.logoImage;$("siteLogoImagePreview").hidden=false}
+ $("siteHeroImagePreview").hidden=!c.heroImage;if(c.heroImage)$("siteHeroImagePreview").src=c.heroImage;
+ $("siteLogoImagePreview").hidden=!c.logoImage;if(c.logoImage)$("siteLogoImagePreview").src=c.logoImage;
+ $("siteHeroVideoPreview").hidden=!(c.heroMediaType==="video"&&c.heroMediaUrl);if(c.heroMediaType==="video"&&c.heroMediaUrl)$("siteHeroVideoPreview").src=c.heroMediaUrl;
+ $("siteHeroGifPreview").hidden=!(c.heroMediaType==="gif"&&c.heroMediaUrl);if(c.heroMediaType==="gif"&&c.heroMediaUrl)$("siteHeroGifPreview").src=c.heroMediaUrl;
+ $("siteLogoAnimationPreview").hidden=!c.logoAnimationUrl;if(c.logoAnimationUrl)$("siteLogoAnimationPreview").src=c.logoAnimationUrl;
 }
 async function loadAdminSiteContent(){
  const msg=$("siteEditorStatus");if(msg)msg.textContent="Loading saved site settings…";
@@ -293,10 +319,39 @@ async function loadAdminSiteContent(){
 }
 async function saveAdminSiteContent(){
  const val=id=>$(id)?.value?.trim()||"";
- const content={heroEyebrow:val("siteHeroEyebrow"),heroTitle:val("siteHeroTitle"),heroHighlight:val("siteHeroHighlight"),heroDescription:val("siteHeroDescription"),heroCta:val("siteHeroCta"),heroImage:val("siteHeroImageUrl"),logoImage:val("siteLogoImageUrl"),accentColor:val("siteAccentColor"),orangeColor:val("siteOrangeColor"),recipesTitle:val("siteRecipesTitle"),recipesDescription:val("siteRecipesDescription"),spotlightTitle:val("siteSpotlightTitle"),spotlightDescription:val("siteSpotlightDescription"),footerTagline:val("siteFooterTagline"),feature1Title:val("siteFeature1Title"),feature1Text:val("siteFeature1Text"),feature2Title:val("siteFeature2Title"),feature2Text:val("siteFeature2Text"),feature3Title:val("siteFeature3Title"),feature3Text:val("siteFeature3Text"),feature4Title:val("siteFeature4Title"),feature4Text:val("siteFeature4Text"),showFeatureStrip:$("siteShowFeatures").checked,showPlanningStart:$("siteShowPlanning").checked,showSpotlightSection:$("siteShowSpotlight").checked,showRecipeSection:$("siteShowRecipes").checked};
+ const content={heroEyebrow:val("siteHeroEyebrow"),heroTitle:val("siteHeroTitle"),heroHighlight:val("siteHeroHighlight"),heroDescription:val("siteHeroDescription"),heroCta:val("siteHeroCta"),heroImage:val("siteHeroImageUrl"),heroMediaUrl:val("siteHeroMediaUrl"),heroMediaType:val("siteHeroMediaType")||"none",logoImage:val("siteLogoImageUrl"),logoAnimationUrl:val("siteLogoAnimationUrl"),accentColor:val("siteAccentColor"),orangeColor:val("siteOrangeColor"),recipesTitle:val("siteRecipesTitle"),recipesDescription:val("siteRecipesDescription"),spotlightTitle:val("siteSpotlightTitle"),spotlightDescription:val("siteSpotlightDescription"),footerTagline:val("siteFooterTagline"),feature1Title:val("siteFeature1Title"),feature1Text:val("siteFeature1Text"),feature2Title:val("siteFeature2Title"),feature2Text:val("siteFeature2Text"),feature3Title:val("siteFeature3Title"),feature3Text:val("siteFeature3Text"),feature4Title:val("siteFeature4Title"),feature4Text:val("siteFeature4Text"),showFeatureStrip:$("siteShowFeatures").checked,showPlanningStart:$("siteShowPlanning").checked,showSpotlightSection:$("siteShowSpotlight").checked,showRecipeSection:$("siteShowRecipes").checked};
  const msg=$("siteEditorStatus");if(msg)msg.textContent="Saving site settings…";
  try{const r=await fetch("/api/admin/site-content",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({siteContent:content})}),d=await r.json();if(!r.ok)throw Error(d.error||"Could not save site settings.");currentSiteContent={...siteDefaults,...(d.siteContent||content)};applySiteContent(currentSiteContent);fillSiteEditor(currentSiteContent);if(msg)msg.textContent="✓ Saved in Supabase. These settings survive future deployments."}
  catch(e){if(msg)msg.textContent=e.message||"Could not save site settings."}
+}
+async function uploadAdminMotionFile(file,area){
+ if(!file)throw Error("Choose a file first.");
+ const allowed=["image/gif","video/mp4","video/webm"];
+ if(!allowed.includes(file.type))throw Error("Choose a GIF, MP4, or WebM file.");
+ if(file.size>45000000)throw Error("Keep video and GIF uploads under 45 MB.");
+ const sign=await fetch("/api/admin/media-sign",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({fileName:file.name,contentType:file.type,size:file.size,area})});
+ const signed=await sign.json();if(!sign.ok)throw Error(signed.error||"Could not prepare the upload.");
+ const uploaded=await fetch(signed.uploadUrl,{method:"PUT",headers:{"Content-Type":file.type,"x-upsert":"false"},body:file});
+ if(!uploaded.ok){const detail=await uploaded.text().catch(()=> "");throw Error("Upload failed ("+uploaded.status+"). "+detail.slice(0,220))}
+ return signed.publicUrl;
+}
+async function uploadHeroMedia(input){
+ const file=input.files?.[0];if(!file)return;
+ const state=$("siteHeroMediaUploadState");if(state)state.textContent="Preparing secure upload…";
+ try{
+  const type=file.type==="video/mp4"||file.type==="video/webm"?"video":"gif";
+  const url=await uploadAdminMotionFile(file,"site");
+  $("siteHeroMediaUrl").value=url;$("siteHeroMediaType").value=type;
+  if(type==="video"){$("siteHeroVideoPreview").src=url;$("siteHeroVideoPreview").hidden=false;$("siteHeroGifPreview").hidden=true}
+  else{$("siteHeroGifPreview").src=url;$("siteHeroGifPreview").hidden=false;$("siteHeroVideoPreview").hidden=true}
+  if(state)state.textContent="✓ Uploaded. Click Save Site Changes to publish the background.";
+ }catch(e){if(state)state.textContent=e.message||"Upload failed."}
+}
+async function uploadLogoAnimation(input){
+ const file=input.files?.[0];if(!file)return;
+ const state=$("siteLogoAnimationUploadState");if(state)state.textContent="Uploading animated logo…";
+ try{const url=await uploadAdminMotionFile(file,"branding");$("siteLogoAnimationUrl").value=url;$("siteLogoAnimationPreview").src=url;$("siteLogoAnimationPreview").hidden=false;if(state)state.textContent="✓ Uploaded. Save Site Changes to enable it on logo hover."}
+ catch(e){if(state)state.textContent=e.message||"Upload failed."}
 }
 function compressImageFile(file){
  return new Promise((resolve,reject)=>{if(!file||!/^image\/(jpeg|png|webp)$/i.test(file.type))return reject(new Error("Choose a JPG, PNG, or WebP image."));const reader=new FileReader();reader.onerror=()=>reject(new Error("Could not read that image."));reader.onload=()=>{const image=new Image();image.onerror=()=>reject(new Error("That image could not be opened."));image.onload=()=>{const max=1800,scale=Math.min(1,max/Math.max(image.width,image.height)),canvas=document.createElement("canvas");canvas.width=Math.max(1,Math.round(image.width*scale));canvas.height=Math.max(1,Math.round(image.height*scale));const ctx=canvas.getContext("2d");ctx.drawImage(image,0,0,canvas.width,canvas.height);let data=canvas.toDataURL("image/webp",.86);if(!data.startsWith("data:image/webp"))data=canvas.toDataURL("image/jpeg",.82);if(data.length>3700000)data=canvas.toDataURL("image/jpeg",.72);resolve(data)};image.src=reader.result};reader.readAsDataURL(file)})
