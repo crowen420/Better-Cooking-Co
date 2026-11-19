@@ -135,7 +135,7 @@
 
 
 .hero{isolation:isolate}
-.hero:before{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(90deg,rgba(0,0,0,.94),rgba(0,0,0,.69) 45%,rgba(0,0,0,.23))}
+.hero:before{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;opacity:0;transition:opacity .2s;background:linear-gradient(90deg,rgba(0,0,0,.91),rgba(0,0,0,.64) 45%,rgba(0,0,0,.18))}.hero.hasHeroVideo:before{opacity:1}
 .heroBackgroundVideo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;opacity:.88;pointer-events:none}
 .hero:after{z-index:1;pointer-events:none}
 .heroContent{z-index:2}
@@ -288,6 +288,7 @@ function applySiteContent(values){
   }
  }
  if(hero){
+  hero.classList.toggle("hasHeroVideo",type==="video"&&!!mediaUrl&&!reduceMotion);
   const backgroundUrl=type==="gif"||type==="image"?mediaUrl:(type==="video"&&reduceMotion?fallback:fallback);
   hero.style.backgroundImage=backgroundUrl?'linear-gradient(90deg,rgba(0,0,0,.94),rgba(0,0,0,.68) 45%,rgba(0,0,0,.16)),url("'+backgroundUrl.replace(/"/g,"%22")+'")':"";
  }
