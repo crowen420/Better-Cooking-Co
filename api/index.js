@@ -86,7 +86,8 @@ async function adminSiteContent(req,res){
   if(!v||/^https:\/\//i.test(v))clean[k]=v.slice(0,1200);
   else return json(res,400,{error:k+' must be an HTTPS image URL.'});
  }
- if(typeof source.heroMediaType==='string'&&['video','gif','image','none'].includes(source.heroMediaType))clean.heroMediaType=source.heroMediaType;\n for(const k of ['accentColor','orangeColor'])if(typeof source[k]==='string'&&/^#[0-9a-f]{6}$/i.test(source[k]))clean[k]=source[k];
+ if(typeof source.heroMediaType==='string'&&['video','gif','image','none'].includes(source.heroMediaType))clean.heroMediaType=source.heroMediaType;
+ for(const k of ['accentColor','orangeColor'])if(typeof source[k]==='string'&&/^#[0-9a-f]{6}$/i.test(source[k]))clean[k]=source[k];
  for(const k of ['showFeatureStrip','showPlanningStart','showSpotlightSection','showRecipeSection'])if(typeof source[k]==='boolean')clean[k]=source[k];
  const rows=await supa('/rest/v1/site_settings',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=representation'},body:JSON.stringify({key:'site_content',value:clean,updated_at:new Date().toISOString()})});
  return json(res,200,{siteContent:rows?.[0]?.value||clean});
