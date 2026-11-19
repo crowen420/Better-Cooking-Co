@@ -72,6 +72,23 @@
 .devRecipeRow .devActions .saveOneRecipe{grid-column:1/-1;background:linear-gradient(135deg,#ffd15a,var(--gold));color:#111;border:0;font-weight:950}
 @media(max-width:850px){.devRecipeRow{grid-template-columns:28px 80px minmax(0,1fr)!important}.devRecipeRow>div:nth-of-type(1){grid-column:3}.devRecipeRow>div:last-child{grid-column:2/-1}}
 @media(max-width:600px){.devRecipeRow{grid-template-columns:25px minmax(0,1fr)!important}.devRecipeRow>img{grid-column:2;width:100%;height:140px}.devRecipeRow>div:nth-of-type(1),.devRecipeRow>div:last-child{grid-column:2}.devRecipeRow .devActions{grid-template-columns:1fr 1fr}}
+
+.recipeTile{display:flex;flex-direction:column;cursor:pointer;outline:none;transition:transform .2s,border-color .2s,box-shadow .2s}
+.recipeTileVisual{position:relative;isolation:isolate;overflow:hidden;height:235px;background:#090b0d}
+.recipeTileVisual .recipeImg{height:100%;width:100%;transition:transform .35s;filter:none}
+.recipeTitleBar{padding:14px 16px 17px;background:#101315;border-top:1px solid #272d32}
+.recipeTitleBar h3{margin:0;color:#f5f5f5;font-size:16px;line-height:1.3}
+.recipeHoverDetails{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:9px;padding:18px;background:linear-gradient(135deg,rgba(7,8,9,.95),rgba(16,19,21,.88));opacity:0;visibility:hidden;transform:translateY(8px);transition:opacity .2s,transform .2s,visibility .2s;pointer-events:none}
+.recipeHoverDetails p{color:#d5dbe0;font-size:12px;line-height:1.5;margin:2px 0;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.recipeHoverDetails .recipeQuickMeta{margin:0}
+.recipeHoverDetails .recipeButtons{width:100%;display:grid;grid-template-columns:1fr 1fr;margin-top:5px}
+.recipeHoverDetails .recipeButtons .btn{font-size:11px;padding:10px 8px}
+.recipeTile:hover,.recipeTile:focus-visible{transform:translateY(-4px);border-color:#78541f;box-shadow:0 18px 38px #000a}
+.recipeTile:hover .recipeTileVisual .recipeImg,.recipeTile:focus-visible .recipeTileVisual .recipeImg{transform:scale(1.045)}
+.recipeTile:hover .recipeHoverDetails,.recipeTile:focus-visible .recipeHoverDetails{opacity:1;visibility:visible;transform:translateY(0);pointer-events:auto}
+.recipeTile:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+@media(hover:none){.recipeHoverDetails{opacity:1;visibility:visible;transform:none;pointer-events:auto;position:absolute;inset:auto 0 0;padding:12px;background:linear-gradient(0deg,rgba(7,8,9,.97),rgba(7,8,9,.72));gap:6px}.recipeHoverDetails p,.recipeHoverDetails .recipeQuickMeta{display:none}.recipeHoverDetails .recipeButtons{margin-top:3px}.recipeTileVisual{height:245px}}
+
 </style>
 </head>
 <body>
@@ -148,9 +165,15 @@ function recipeSortList(){return Object.values(recipes).filter(r=>r.visible!==fa
 function renderRecipes(){const all=recipeSortList(),shown=all.slice(0,4),rest=all.slice(4);$('recipeGrid').innerHTML=shown.map(r=>recipeCard(r)).join('')+(rest.length?`<details class="moreRecipesMenu"><summary><span>More Recipes</span><span class="moreRecipesMeta">${rest.length} more to explore</span></summary><div class="moreRecipesBody"><div class="recipeGrid">${rest.map(r=>recipeCard(r)).join('')}</div></div></details>`:'');$('recipeSelect').value=selectedRecipe||'';const spot=all.filter(r=>r.spotlight);$('spotlightSection').style.display=spot.length?'block':'none';$('spotlightHeading').textContent=window.cbSpotlightTitle||'In the Spotlight';$('spotlightDescription').textContent=window.cbSpotlightDescription||'Featured recipes and lessons selected by Cook Better Co.';$('spotlightGrid').innerHTML=spot.map(r=>recipeCard(r)).join('')}
 function recipeCard(r){
  const adminLocked=!!r.locked,idx=recipeSortList().findIndex(x=>x.id===r.id),paywallLocked=paywallEnabled&&idx>=4&&!isSubscriber(),locked=adminLocked||paywallLocked;
- const preview=(r.ingredients||[]).slice(0,3).map(i=>i[0]).filter(Boolean),extra=Math.max(0,(r.ingredients||[]).length-preview.length);
- const needsSetup=!currentCustomer||!krogerConnected;const buttonText=adminLocked?'Unavailable':paywallLocked?'Explore membership':needsSetup?'Preview & unlock full recipe':'Open recipe & build grocery list';
- return `<article class="recipe ${locked?'locked':''}"><div class="recipeImg" style="background-image:url('${esc(r.img)}')">${locked?`<div class="recipeLockOverlay"><span class="recipeLockBadge">🔒 ${adminLocked?'Unavailable':'Member recipe'}</span></div>`:''}</div><div class="recipeBody"><span class="tag">${esc(r.category||'Recipe')}</span><h3>${esc(r.name)}</h3><div>${(r.tags||[]).slice(0,2).map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div><p>${esc(r.description||'A Cook Better Co. recipe to help you build confidence in the kitchen.')}</p><div class="recipeQuickMeta"><span>🍽 ${Number(r.baseServings||1)} servings</span><span>🧾 ${(r.ingredients||[]).length} ingredients</span></div><div class="recipeIngredientPeek">${preview.map(x=>`<span>${esc(x)}</span>`).join('')}${extra?`<span class="more">+${extra} more</span>`:''}</div><div class="recipeButtons"><button class="btn primary" ${adminLocked?'disabled':''} onclick="openRecipePage('${r.id}')">${buttonText}</button><button class="btn ghost" onclick="showNutrition('${r.id}')">Nutrition</button></div></div></article>`;
+ const needsSetup=!currentCustomer||!krogerConnected;
+ const buttonText=adminLocked?'Unavailable':paywallLocked?'Explore membership':needsSetup?'Preview full recipe':'View recipe';
+ return '<article class="recipe recipeTile '+(locked?'locked':'')+'" tabindex="0" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();openRecipePage(\''+r.id+'\')}">'+
+  '<div class="recipeTileVisual"><div class="recipeImg" style="background-image:url(\''+esc(r.img)+'\')"></div>'+
+  (locked?'<div class="recipeLockOverlay"><span class="recipeLockBadge">🔒 '+(adminLocked?'Unavailable':'Member recipe')+'</span></div>':'')+
+  '<div class="recipeHoverDetails"><span class="tag">'+esc(r.category||'Recipe')+'</span><p>'+esc(r.description||'Build your cooking skills with this Cook Better Co. recipe.')+'</p>'+
+  '<div class="recipeQuickMeta"><span>🍽 '+Number(r.baseServings||1)+' servings</span><span>🧾 '+(r.ingredients||[]).length+' ingredients</span></div>'+
+  '<div class="recipeButtons"><button class="btn primary" '+(adminLocked?'disabled':'')+' onclick="event.stopPropagation();openRecipePage(\''+r.id+'\')">'+buttonText+'</button><button class="btn ghost" onclick="event.stopPropagation();showNutrition(\''+r.id+'\')">Nutrition</button></div></div></div>'+
+  '<div class="recipeTitleBar"><h3>'+esc(r.name)+'</h3></div></article>';
 }
 function recipeAccessCta(id){
  const label=!currentCustomer?'Create account to continue':!krogerConnected?'Connect Kroger to unlock':'Continue to recipe';
