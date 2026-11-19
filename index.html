@@ -255,8 +255,8 @@ function applySiteContent(values){
  setSiteText("heroEyebrow",c.heroEyebrow);const title=$("heroTitle");if(title)title.innerHTML=esc(c.heroTitle||"Learn to Cook.")+"<br><span id=\"heroTitleHighlight\">"+esc(c.heroHighlight||"One Meal at a Time.")+"</span>";setSiteText("heroDescription",c.heroDescription);setSiteText("heroPrimaryCta",c.heroCta);
  setSiteText("recipesHeading",c.recipesTitle);setSiteText("recipesDescription",c.recipesDescription);setSiteText("spotlightHeading",c.spotlightTitle);setSiteText("spotlightDescription",c.spotlightDescription);setSiteText("footerTagline",c.footerTagline);
  window.cbSpotlightTitle=c.spotlightTitle;window.cbSpotlightDescription=c.spotlightDescription;
- const hero=$("top");if(hero&&c.heroImage)hero.style.backgroundImage='linear-gradient(90deg,rgba(0,0,0,.94),rgba(0,0,0,.68) 45%,rgba(0,0,0,.16)),url("'+c.heroImage.replace(/"/g,"%22")+'")';
- if(c.logoImage){if($("logo"))$("logo").src=c.logoImage;if($("footerLogo"))$("footerLogo").src=c.logoImage}
+ const hero=$("top");if(hero)hero.style.backgroundImage=c.heroImage?'linear-gradient(90deg,rgba(0,0,0,.94),rgba(0,0,0,.68) 45%,rgba(0,0,0,.16)),url("'+c.heroImage.replace(/"/g,"%22")+'")':"";
+ const logoSrc=c.logoImage||"/assets/main-logo.png";if($("logo"))$("logo").src=logoSrc;if($("footerLogo"))$("footerLogo").src=logoSrc;
  document.documentElement.style.setProperty("--gold",c.accentColor||siteDefaults.accentColor);document.documentElement.style.setProperty("--orange",c.orangeColor||siteDefaults.orangeColor);
  const features=$("featureStrip");if(features){features.style.display=c.showFeatureStrip===false?"none":"";const nodes=features.querySelectorAll(".feature");for(let i=0;i<4;i++){const n=nodes[i];if(n){const title=n.querySelector("strong"),small=n.querySelector("small");if(title)title.textContent=c["feature"+(i+1)+"Title"]||"";if(small)small.textContent=c["feature"+(i+1)+"Text"]||""}}}
  if($("planningStart"))$("planningStart").style.display=c.showPlanningStart===false?"none":"";
