@@ -9,11 +9,11 @@ var api=async function(path,options){var response=await fetch(path,options||{});
 var premiumAllowed=function(){return paywallMode==="off"||!!(currentCustomer&&((paywallMode==="demo"&&["demo","active"].includes(String(currentCustomer.subscription_status||"").toLowerCase()))||(paywallMode==="real"&&String(currentCustomer.subscription_status||"").toLowerCase()==="active")))};
 function setModeNotice(message){var note=$("subscriptionNote");if(note)note.textContent=message}
 function updateSubscriptionModeUI(){
- var statusEl=$("subscriptionStatus"),button=document.querySelector("#subscriptionPage button[onclick='subscriptionCheckout()']");
+ var statusEl=$("subscriptionStatus"),button=$("subscriptionCheckoutBtn");
  if(statusEl){statusEl.classList.add("on");statusEl.textContent=paywallMode==="off"?"FULL ACCESS · NO PAYWALL":paywallMode==="demo"?(premiumAllowed()?"DEMO MEMBERSHIP ACTIVE":"PRESENTATION DEMO"):(premiumAllowed()?"ACTIVE MEMBERSHIP":"MEMBERSHIP REQUIRED")}
- if(button){button.textContent=paywallMode==="off"?"Return to Cook Better Co.":paywallMode==="demo"?(premiumAllowed()?"Membership Unlocked":"Complete Demo Checkout"):"Subscribe & Unlock";button.disabled=paywallMode==="off"||premiumAllowed()}
+ if(button){button.textContent=paywallMode==="off"?"Return to Cook Better Co.":paywallMode==="demo"?(premiumAllowed()?"Membership Unlocked":"Complete Fake Checkout · No Charge"):"Subscribe & Unlock";button.disabled=paywallMode==="off"||premiumAllowed()}
  if(paywallMode==="off")setModeNotice("No-paywall mode is active. All app features are available without a subscription.");
- else if(paywallMode==="demo")setModeNotice("Presentation mode only. Complete the simulated checkout to unlock the full experience. No real payment is requested or taken.");
+ else if(paywallMode==="demo")setModeNotice("FAKE PAYWALL: press Complete Fake Checkout to activate a demo membership. No card details are collected and no money is charged.");
  else if(!stripeConfigured)setModeNotice("Real payment mode is selected, but live checkout is safely disabled until Stripe credentials are present and premium recipe content is delivered through authenticated server-side access. No charge can be made.");
  else setModeNotice("Live subscription checkout is handled by Stripe. Access is enabled after Stripe confirms payment.");
 }
@@ -55,14 +55,15 @@ window.setPaywallMode=async function(mode){
 };
 window.setPaywall=async function(enabled){return window.setPaywallMode(enabled?"real":"off")};
 window.subscriptionCheckout=async function(){
+ await loadPaywallMode();
  if(paywallMode==="off"){if(typeof showHome==="function")showHome();return}
  if(premiumAllowed())return typeof status==="function"&&status("Your access is already unlocked.","ok");
  if(!currentCustomer){if(typeof openAccount==="function")openAccount();return}
- var button=document.querySelector("#subscriptionPage button[onclick='subscriptionCheckout()']");
- if(button){button.disabled=true;button.textContent=paywallMode==="demo"?"Activating demo…":"Opening secure checkout…"}
+ var button=$("subscriptionCheckoutBtn");
+ if(button){button.disabled=true;button.textContent=paywallMode==="demo"?"Activating fake membership…":"Opening secure checkout…"}
  try{
   if(paywallMode==="demo"){
-   var d=await api("/api/billing/demo-unlock",{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"});
+   var d=await api("/api/billing/demo-unlock",{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"});if(!d.ok||!d.customer)throw new Error(d.message||"The fake checkout could not activate your demo membership.");
    currentCustomer=d.customer;if(typeof updateAccount==="function")updateAccount(d.customer);
    updateSubscriptionModeUI();if(typeof status==="function")status("Demo membership activated. No payment was taken.","ok");
    if(typeof showHome==="function")showHome();if(typeof renderRecipes==="function")renderRecipes();
@@ -72,7 +73,7 @@ window.subscriptionCheckout=async function(){
    if(!checkout.url)throw new Error("Stripe did not return a checkout link.");window.location.href=checkout.url;return;
   }
  }catch(e){setModeNotice(e.message);if(typeof status==="function")status(e.message,"err")}
- finally{if(button){button.disabled=paywallMode==="off"||premiumAllowed();button.textContent=paywallMode==="demo"?"Membership Unlocked":"Subscribe & Unlock"}}
+ finally{if(button){button.disabled=paywallMode==="off"||premiumAllowed();button.textContent=paywallMode==="demo"?(premiumAllowed()?"Membership Unlocked":"Complete Fake Checkout · No Charge"):"Subscribe & Unlock"}}
 };
 
 function buildAccountModeTabs(){
