@@ -14,7 +14,7 @@ function updateSubscriptionModeUI(){
  if(button){button.textContent=paywallMode==="off"?"Return to Cook Better Co.":paywallMode==="demo"?(premiumAllowed()?"Membership Unlocked":"Complete Demo Checkout"):"Subscribe & Unlock";button.disabled=paywallMode==="off"||premiumAllowed()}
  if(paywallMode==="off")setModeNotice("No-paywall mode is active. All app features are available without a subscription.");
  else if(paywallMode==="demo")setModeNotice("Presentation mode only. Complete the simulated checkout to unlock the full experience. No real payment is requested or taken.");
- else if(!stripeConfigured)setModeNotice("Real payment mode is selected, but Stripe is not configured yet. No charge can be made. Add STRIPE_SECRET_KEY, STRIPE_PRICE_ID, and STRIPE_WEBHOOK_SECRET in Vercel before using live subscriptions.");
+ else if(!stripeConfigured)setModeNotice("Real payment mode is selected, but live checkout is safely disabled until Stripe credentials are present and premium recipe content is delivered through authenticated server-side access. No charge can be made.");
  else setModeNotice("Live subscription checkout is handled by Stripe. Access is enabled after Stripe confirms payment.");
 }
 window.isSubscriber=function(){return premiumAllowed()};
@@ -35,7 +35,7 @@ window.loadDeveloperPaywall=async function(){
   paywallMode=["real","demo","off"].includes(data.paywallMode)?data.paywallMode:(data.paywallEnabled?"real":"off");
   stripeConfigured=!!data.stripeConfigured;paywallEnabled=paywallMode!=="off";
   renderPaywallModeControls();updateSubscriptionModeUI();
-  if($("devPaywallMsg"))$("devPaywallMsg").textContent=paywallMode==="off"?"All app features are unlocked. No subscription is required.":paywallMode==="demo"?"Presentation mode: the customer sees a clearly labelled simulated checkout. Demo unlocks never charge a card.":stripeConfigured?"Live Stripe checkout is configured. Access is granted only after a verified Stripe subscription event.":"Real mode is selected, but Stripe credentials are missing. The real checkout is safely disabled until configured.";
+  if($("devPaywallMsg"))$("devPaywallMsg").textContent=paywallMode==="off"?"All app features are unlocked. No subscription is required.":paywallMode==="demo"?"Presentation mode: the customer sees a clearly labelled simulated checkout. Demo unlocks never charge a card.":stripeConfigured?"Live Stripe checkout is configured. Access is granted only after a verified Stripe subscription event.":"Real mode is selected, but live checkout is safely disabled until Stripe credentials and authenticated premium-content delivery are configured.";
   if(typeof renderRecipes==="function")renderRecipes();
  }catch(e){if($("devPaywallMsg"))$("devPaywallMsg").textContent=e.message}
 };
@@ -47,11 +47,11 @@ function renderPaywallModeControls(){
  if(!shell)return;
  var bulk=shell.querySelector(".devBulk");
  if(bulk)bulk.innerHTML=
-  '<button type="button" class="cbPaywallMode '+(paywallMode==="real"?"active":"")+'" onclick="setPaywallMode(&quot;real&quot;)"><span class="cbModeFlag">LIVE BILLING</span><strong>Real Paywall</strong><span>Stripe subscription checkout. Live charging remains disabled until billing credentials and webhook are configured.</span></button>'+
+  '<button type="button" class="cbPaywallMode '+(paywallMode==="real"?"active":"")+'" onclick="setPaywallMode(&quot;real&quot;)"><span class="cbModeFlag">LIVE BILLING</span><strong>Real Paywall</strong><span>Stripe subscription checkout. Live charging remains disabled until billing credentials and authenticated premium recipe delivery are configured.</span></button>'+
   '<button type="button" class="cbPaywallMode '+(paywallMode==="demo"?"active":"")+'" onclick="setPaywallMode(&quot;demo&quot;)"><span class="cbModeFlag">PRESENTATION</span><strong>Fake Paywall</strong><span>Simulated checkout unlocks the app for testing. No real payment or card charge occurs.</span></button>'+
   '<button type="button" class="cbPaywallMode '+(paywallMode==="off"?"active":"")+'" onclick="setPaywallMode(&quot;off&quot;)"><span class="cbModeFlag">OPEN ACCESS</span><strong>No Paywall</strong><span>Everyone has full access. No subscription screen or checkout is required.</span></button>';
  var price=shell.querySelector(".muted");if(price)price.textContent="Membership concept price: $9.99/month";
- var billing=$("cbStripeStatus");if(billing){billing.innerHTML=paywallMode==="demo"?"Payment mode: <strong>Simulated checkout only</strong>. No real payment details are collected and no charge is made.":paywallMode==="off"?"Payment mode: <strong>No paywall</strong>. Subscription checkout is bypassed.":stripeConfigured?"Payment processor: <strong>Stripe credentials detected</strong>. Complete a test subscription before enabling live production billing.":"Payment processor: <strong>Not configured</strong>. Real checkout stays disabled until Stripe secret, price, and webhook credentials are added in Vercel."}
+ var billing=$("cbStripeStatus");if(billing){billing.innerHTML=paywallMode==="demo"?"Payment mode: <strong>Simulated checkout only</strong>. No real payment details are collected and no charge is made.":paywallMode==="off"?"Payment mode: <strong>No paywall</strong>. Subscription checkout is bypassed.":stripeConfigured?"Payment processor: <strong>Stripe credentials detected</strong>. Complete a test subscription before enabling live production billing.":"Payment processor: <strong>Not ready for live billing</strong>. Stripe credentials and authenticated server-side premium-content delivery are both required before a real charge can occur."}
 }
 window.setPaywallMode=async function(mode){
  if(!["real","demo","off"].includes(mode))return;
@@ -61,7 +61,7 @@ window.setPaywallMode=async function(mode){
   renderPaywallModeControls();updateSubscriptionModeUI();
   if(typeof renderRecipes==="function")renderRecipes();
   if(typeof status==="function")status("Paywall mode changed to "+(mode==="off"?"No Paywall":mode==="demo"?"Fake Paywall":"Real Paywall")+".","ok");
-  if($("devPaywallMsg"))$("devPaywallMsg").textContent=mode==="demo"?"Presentation mode is active. Customers can simulate the subscription and unlock the app. No money is taken.":mode==="off"?"The entire app is open to all visitors.":"Real checkout is selected. "+(stripeConfigured?"Stripe is configured.":"Stripe keys still need to be added in Vercel; checkout will not charge or proceed until then.");
+  if($("devPaywallMsg"))$("devPaywallMsg").textContent=mode==="demo"?"Presentation mode is active. Customers can simulate the subscription and unlock the app. No money is taken.":mode==="off"?"The entire app is open to all visitors.":"Real checkout is selected. "+(stripeConfigured?"Stripe is configured.":"Stripe credentials and authenticated premium-content delivery are required before checkout can charge.");
  }catch(e){if(typeof status==="function")status(e.message,"err")}
 };
 window.setPaywall=async function(enabled){return window.setPaywallMode(enabled?"real":"off")};
@@ -78,7 +78,7 @@ window.subscriptionCheckout=async function(){
    updateSubscriptionModeUI();if(typeof status==="function")status("Demo membership activated. No payment was taken.","ok");
    if(typeof showHome==="function")showHome();if(typeof renderRecipes==="function")renderRecipes();
   }else{
-   if(!stripeConfigured)throw new Error("Live Stripe payments are not configured. No charge was made. Ask the administrator to add the Stripe secret, price, and webhook keys in Vercel.");
+   if(!stripeConfigured)throw new Error("Live billing is not ready. No charge was made. The administrator must configure Stripe and move premium recipe content behind authenticated server-side access.");
    var checkout=await api("/api/billing/checkout",{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"});
    if(!checkout.url)throw new Error("Stripe did not return a checkout link.");window.location.href=checkout.url;return;
   }
