@@ -54,12 +54,16 @@ async function analyticsEvent(req,res){if(req.method!=='POST')return json(res,40
 
 async function publicTechniques(req,res){
  if(req.method!=='GET')return json(res,405,{error:'Method not allowed.'});
- const u=await accountUser(req,res);if(!u)return json(res,401,{error:'Sign in to access Technique Videos.'});
- const p=await profileFor(u.id),mode=await readPaywallMode(),status=String(p?.subscription_status||'').toLowerCase();
- const unlocked=mode==='off'||(mode==='demo'&&['demo','active'].includes(status))||(mode==='real'&&status==='active');
- if(!unlocked)return json(res,403,{error:mode==='demo'?'Complete the demo checkout to view Technique Videos.':'An active membership is required to view Technique Videos.'});
+ const mode=await readPaywallMode(),u=await accountUser(req,res);
+ // No Paywall means genuinely open access, including technique videos for signed-out visitors.
+ if(mode!=='off'&&!u)return json(res,401,{error:'Sign in to access member Technique Videos.'});
+ if(mode==='demo'||mode==='real'){
+  const p=await profileFor(u.id),status=String(p?.subscription_status||'').toLowerCase();
+  const unlocked=mode==='demo'?['demo','active'].includes(status):status==='active';
+  if(!unlocked)return json(res,403,{error:mode==='demo'?'Complete the demo checkout to view Technique Videos.':'An active membership is required to view Technique Videos.'});
+ }
  const rows=await supa('/rest/v1/site_settings?key=eq.technique_videos&select=value').catch(()=>[]);
- return json(res,200,{videos:Array.isArray(rows?.[0]?.value)?rows[0].value:[]});
+ return json(res,200,{videos:Array.isArray(rows?.[0]?.value)?rows[0].value:[],paywallMode:mode});
 }
 async function adminTechniques(req,res){
  const a=await requireAdmin(req,res);if(!a)return;
