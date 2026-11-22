@@ -28,6 +28,7 @@ async function loadPaywallMode(){
  }catch(e){paywallMode="off";stripeConfigured=false}
  paywallEnabled=paywallMode!=="off";
  updateSubscriptionModeUI();
+ if(typeof syncNavControls==="function")syncNavControls();
  if(typeof renderRecipes==="function")renderRecipes();
 }
 window.loadDeveloperPaywall=async function(){
@@ -40,20 +41,7 @@ window.loadDeveloperPaywall=async function(){
   if(typeof renderRecipes==="function")renderRecipes();
  }catch(e){if($("devPaywallMsg"))$("devPaywallMsg").textContent=e.message}
 };
-function renderPaywallModeControls(){
- var statusEl=$("devPaywallStatus");if(!statusEl)return;
- statusEl.textContent=paywallMode==="off"?"NO PAYWALL":paywallMode==="demo"?"FAKE PAYWALL · PRESENTATION":"REAL PAYWALL";
- statusEl.classList.toggle("on",paywallMode!=="off");
- var shell=statusEl.parentElement&&statusEl.parentElement.parentElement;
- if(!shell)return;
- var bulk=shell.querySelector(".devBulk");
- if(bulk)bulk.innerHTML=
-  '<button type="button" class="cbPaywallMode '+(paywallMode==="real"?"active":"")+'" onclick="setPaywallMode(&quot;real&quot;)"><span class="cbModeFlag">LIVE BILLING</span><strong>Real Paywall</strong><span>Stripe subscription checkout. Live charging remains disabled until billing credentials and authenticated premium recipe delivery are configured.</span></button>'+
-  '<button type="button" class="cbPaywallMode '+(paywallMode==="demo"?"active":"")+'" onclick="setPaywallMode(&quot;demo&quot;)"><span class="cbModeFlag">PRESENTATION</span><strong>Fake Paywall</strong><span>Simulated checkout unlocks the app for testing. No real payment or card charge occurs.</span></button>'+
-  '<button type="button" class="cbPaywallMode '+(paywallMode==="off"?"active":"")+'" onclick="setPaywallMode(&quot;off&quot;)"><span class="cbModeFlag">OPEN ACCESS</span><strong>No Paywall</strong><span>Everyone has full access. No subscription screen or checkout is required.</span></button>';
- var price=shell.querySelector(".muted");if(price)price.textContent="Membership concept price: $9.99/month";
- var billing=$("cbStripeStatus");if(billing){billing.innerHTML=paywallMode==="demo"?"Payment mode: <strong>Simulated checkout only</strong>. No real payment details are collected and no charge is made.":paywallMode==="off"?"Payment mode: <strong>No paywall</strong>. Subscription checkout is bypassed.":stripeConfigured?"Payment processor: <strong>Stripe credentials detected</strong>. Complete a test subscription before enabling live production billing.":"Payment processor: <strong>Not ready for live billing</strong>. Stripe credentials and authenticated server-side premium-content delivery are both required before a real charge can occur."}
-}
+function renderPaywallModeControls(){syncPaywallButtons();}
 window.setPaywallMode=async function(mode){
  if(!["real","demo","off"].includes(mode))return;
  try{
@@ -179,6 +167,33 @@ function ensureFeatureSection(id,after,markup){
  if(after&&after.parentNode)after.insertAdjacentElement("afterend",node);else document.querySelector("main")?.appendChild(node);
  return node;
 }
+
+function ensureFeatureDirectory(){
+ var markup='<div class="cbSectionIntro"><div class="eyebrow">COOK BETTER CO. · EXPLORE</div><h2>More than a recipe list. <span class="accent">Your kitchen toolkit.</span></h2><p>Everything in Cook Better Co. has a place. Choose a tool below to jump into the experience.</p></div><div class="cbToolGrid">'+
+  '<article class="cbToolCard"><div class="cbToolIcon">🥘</div><div class="eyebrow">PLAN SMARTER</div><h3>Smart meal combinations</h3><p>Pair recipes that share ingredients and create one combined grocery list.</p><button class="btn secondary" type="button" data-cb-explore="combinations">Explore combinations</button></article>'+
+  '<article class="cbToolCard"><div class="cbToolIcon">👨‍🍳</div><div class="eyebrow">LEARN BY DOING</div><h3>Guided cooking</h3><p>Open a recipe for step-by-step cooking mode, progress tracking, and built-in timers.</p><button class="btn secondary" type="button" data-cb-explore="guided">Find a recipe</button></article>'+
+  '<article class="cbToolCard"><div class="cbToolIcon">📊</div><div class="eyebrow">KNOW YOUR MEAL</div><h3>Nutrition estimates</h3><p>See estimated calories, protein, carbs, and fat per serving on recipe cards.</p><button class="btn secondary" type="button" data-cb-explore="nutrition">View nutrition</button></article>'+
+  '<article class="cbToolCard"><div class="cbToolIcon">🛒</div><div class="eyebrow">SHOP YOUR STORE</div><h3>Store-aware grocery shopping</h3><p>Choose a ZIP code and Kroger location so product matching uses your selected store.</p><button class="btn secondary" type="button" data-cb-explore="shopping">Build a grocery list</button></article>'+
+  '<article class="cbToolCard"><div class="cbToolIcon">🔁</div><div class="eyebrow">COMPARE PRODUCTS</div><h3>Product substitutions</h3><p>Compare alternatives by product photo, brand, package size, and price.</p><button class="btn secondary" type="button" data-cb-explore="substitutions">Explore swaps</button></article>'+
+  '<article class="cbToolCard"><div class="cbToolIcon">👨‍👩‍👧‍👦</div><div class="eyebrow">COOK TOGETHER</div><h3>Household profiles</h3><p>Create a household or join one with an invite code from your account page.</p><button class="btn secondary" type="button" data-cb-explore="household">Manage household</button></article>'+
+  '<article class="cbToolCard"><div class="cbToolIcon">⭐</div><div class="eyebrow">SHARE YOUR FAVORITES</div><h3>Community ratings</h3><p>Rate and review recipes, and save the meals you want to make again.</p><button class="btn secondary" type="button" data-cb-explore="community">Visit community</button></article>'+
+  '<article class="cbToolCard"><div class="cbToolIcon">🎥</div><div class="eyebrow">BUILD YOUR SKILLS</div><h3>Technique video library</h3><p>Open the technique library for lessons published by Cook Better Co.</p><button class="btn secondary" type="button" data-cb-explore="techniques">Open techniques</button></article>'+
+ '</div>';
+ return ensureFeatureSection("cbFeatureDirectory",$("featureStrip")||$("hero"),markup);
+}
+function handleExploreAction(action){
+ var target=null,message="";
+ if(action==="combinations")target=$("smartCombosSection");
+ else if(action==="community")target=$("communitySection");
+ else if(action==="household"){if(typeof window.openAccount==="function")window.openAccount();return}
+ else if(action==="techniques"){if(typeof window.openTechniqueLibrary==="function")window.openTechniqueLibrary();return}
+ else if(action==="guided"){target=$("recipes");message="Open a recipe, then choose Guided cooking mode for step navigation and timers."}
+ else if(action==="nutrition"){target=$("recipes");message="Choose Nutrition on any recipe card to view its estimated per-serving values."}
+ else if(action==="shopping"){target=$("recipes");message="Open a recipe and build its grocery list. Choose your ZIP code and Kroger store in the grocery builder."}
+ else if(action==="substitutions"){target=$("recipes");message="Open a recipe, build the grocery list, then use Swap on a product to compare alternatives."}
+ if(target){target.scrollIntoView({behavior:"smooth",block:"start"});if(message&&typeof status==="function")status(message,"ok")}
+}
+
 function renderSmartCombos(){
  if(typeof recipes==="undefined"||typeof recipeSortList!=="function")return;
  var all=recipeSortList().filter(function(r){return !String(r.id).startsWith("combo_")&&Array.isArray(r.ingredients)&&r.ingredients.length});
@@ -491,9 +506,7 @@ window.openRecipePage=function(id){
 window.startCookingMode=function(recipeId){
  var recipe=typeof recipes!=="undefined"?recipes[recipeId]:null;
  if(!recipe)return;
- if(!currentCustomer){if(typeof openAccount==="function")openAccount();return}
- var index=typeof recipeSortList==="function"?recipeSortList().findIndex(function(r){return r.id===recipeId}):-1;
- if(paywallEnabled&&!premiumAllowed()&&index>=4){if(typeof openSubscription==="function")openSubscription();return}
+ if(!currentCustomer&&paywallMode!=="off"){if(typeof openAccount==="function")openAccount();return}
  cookRecipeId=recipeId;
  cookSteps=paywallEnabled&&!premiumAllowed()?(recipe.instructions||[]).slice(0,2):(recipe.instructions||[]).slice();
  cookStep=0;if(!cookSteps.length)return;
@@ -510,7 +523,7 @@ window.redeemDemoReward=function(rewardId,cost,title){
 
 function initializeMajorUpdate(){
  buildAccountModeTabs();ensureCookOverlay();ensureHouseholdPanel();enhanceStoreField();showStoreDisclaimer();ensureCommunitySection();
- loadPaywallMode();refreshCommunity();renderSmartCombos();watchRecipeGrid();
+ loadPaywallMode();refreshCommunity();renderSmartCombos();ensureFeatureDirectory();watchRecipeGrid();
  if(currentCustomer){refreshHousehold();applySavedZipAndStore()}
  var app=document.querySelector("#accountModal .modalCard");if(app){app.addEventListener("keydown",function(e){if(e.key==="Enter"&&e.target.tagName==="INPUT"&&e.target.id!=="accountPasswordConfirm"){e.preventDefault();if($("cbAccountModeTabs")?.querySelector("button.active")?.dataset.mode==="signup")window.registerAccount();else window.loginAccount()}})}
  if(new URLSearchParams(location.search).get("payment")==="success"){if(typeof status==="function")status("Payment completed. Your membership will unlock after Stripe confirms the subscription.","ok");history.replaceState({},document.title,location.pathname)}
@@ -519,6 +532,7 @@ function initializeMajorUpdate(){
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",initializeMajorUpdate);else initializeMajorUpdate();
 window.addEventListener("focus",function(){if(currentCustomer)refreshHousehold()});
 document.addEventListener("click",function(e){
+ var explore=e.target.closest("[data-cb-explore]");if(explore)handleExploreAction(explore.dataset.cbExplore);
  var combo=e.target.closest("[data-combo-a]");if(combo){var a=recipes[combo.dataset.comboA],b=recipes[combo.dataset.comboB];if(a&&b){var r=makeComboRecipe(a,b);recipes[r.id]=r;window.openRecipePage(r.id)}}
  var open=e.target.closest("[data-community-open]");if(open)window.openRecipePage(open.dataset.communityOpen);
  var favorite=e.target.closest("[data-community-fav]");if(favorite)toggleCommunityFavorite(favorite.dataset.communityFav);
