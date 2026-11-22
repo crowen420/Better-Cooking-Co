@@ -1,0 +1,20 @@
+name: Validate application syntax
+on:
+  push:
+    branches:
+      - cook-better-major-update
+  pull_request:
+    branches:
+      - cook-better-major-update
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Check server and browser JavaScript syntax
+        run: |
+          node --check api/index.js
+          node --check assets/major-update.js
