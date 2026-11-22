@@ -150,6 +150,7 @@
 @media(prefers-reduced-motion:reduce){.heroBackgroundVideo{display:none!important}.brandHoverGif{display:none!important}.brand img#logo{transition:none}}
 
 </style>
+<link rel="stylesheet" href="/assets/major-update.css">
 </head>
 <body>
 <nav class="nav"><a class="brand" href="#top" onclick="showHome();return true"><img id="logo" src="/assets/main-logo.png" alt="Cook Better Co."><img id="logoHoverGif" class="brandHoverGif" alt="" aria-hidden="true" hidden><div class="brandWords"><strong>COOK <span>BETTER</span> CO.</strong><small>BETTER FOOD · BETTER YOU.</small></div></a><div class="navlinks"><a href="#top" onclick="showHome()">Home</a><a href="#recipes" onclick="showHome()">Recipes</a><a href="#learn" onclick="showHome()">Learn</a><a id="techniqueNav" href="#techniques" onclick="openTechniqueLibrary();return false" style="display:none">Techniques</a><a href="#account" onclick="showHome()">About</a></div><div class="navactions"><button id="developerNav" class="btn ghost" style="display:none" onclick="openDeveloperPage()">Developer</button><button id="accountTopBtn" class="btn ghost" onclick="openAccount()">Account</button><button class="btn primary krogerBtn" onclick="connectKroger()"><span class="krogerMark" aria-hidden="true"><span>🛒</span></span><span id="krogerBtnText">Connect Kroger</span></button></div></nav>
@@ -586,4 +587,5 @@ loadRecipeOverrides().then(()=>Promise.all([checkAccount(),checkKroger()])).then
 $("accountPassword")?.addEventListener("input",updatePasswordMatch);
 $("accountPasswordConfirm")?.addEventListener("input",updatePasswordMatch);$("newPasswordConfirm")?.addEventListener("input",()=>{const a=$("newPassword").value,b=$("newPasswordConfirm").value,m=$("newPasswordMatch");if(!b){m.textContent='';m.className='passwordHint'}else if(a===b){m.textContent='✓ Passwords match';m.className='passwordHint match'}else{m.textContent='Passwords do not match';m.className='passwordHint noMatch'}});window.addEventListener('keydown',e=>{if(e.key==='Escape'){document.querySelectorAll('.modal.open').forEach(x=>x.classList.remove('open'));$('legalModal').classList.remove('open')}});
 </script>
+<script src="/assets/major-update.js"></script>
 </body></html>
