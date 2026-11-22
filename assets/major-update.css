@@ -110,5 +110,5 @@
 .cbToolCard h3{margin:8px 0;font-size:18px}
 .cbToolCard p{flex:1;margin:0 0 18px;color:#aeb4ba;font-size:13px;line-height:1.6}
 .cbToolCard .btn{width:100%;margin-top:auto;white-space:normal}
-@media(max-width:1050px){.cbPaywallModes{grid-template-columns:repeat(2,minmax(0,1fr))!important}.cbToolGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:1050px){.cbToolGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:620px){.cbPaywallModes{grid-template-columns:1fr!important}.cbPaywallMode{min-height:0}.cbToolGrid{grid-template-columns:1fr}}
