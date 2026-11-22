@@ -23,11 +23,8 @@ async function loadPaywallMode(){
  try{
   var data=await api("/api/content/recipes");
   paywallMode=["real","demo","off"].includes(data.paywallMode)?data.paywallMode:(data.paywallEnabled?"real":"off");
- }catch(e){paywallMode="off"}
- try{
-  var admin=await api("/api/admin/settings");
-  stripeConfigured=!!admin.stripeConfigured;
- }catch(e){stripeConfigured=false}
+  stripeConfigured=!!data.stripeConfigured;
+ }catch(e){paywallMode="off";stripeConfigured=false}
  paywallEnabled=paywallMode!=="off";
  updateSubscriptionModeUI();
  if(typeof renderRecipes==="function")renderRecipes();
