@@ -93,3 +93,22 @@
 .recipePreviewCount{font-size:12px;color:#aeb4ba;line-height:1.5;margin-top:9px}
 @media(max-width:900px){.cbRewardShopGrid{grid-template-columns:repeat(2,minmax(0,1fr))}.cbPaywallToolbar{display:block}.cbPaywallModes{width:100%}}
 @media(max-width:560px){.cbNavRewards{gap:6px;padding:9px 10px;font-size:11px}.cbNavRewards strong{font-size:10px;padding:4px 6px}.cbRewardShopHeader{display:block}.cbRewardShopHeader .cbDemoLabel{margin-top:12px}.cbRewardShopGrid{grid-template-columns:repeat(2,minmax(0,1fr))}.cbRewardProductArt{height:88px;font-size:36px}.cbRewardProductBody{padding:10px}.cbRewardProductBody h4{font-size:13px}.cbRewardProductBody p{font-size:10px;min-height:55px}.cbRewardProductBody button{font-size:10px}}
+
+
+/* Admin paywall selector: show all three choices at full width. */
+.cbPaywallToolbar{display:block!important;width:100%;min-width:0}
+.cbPaywallModes{display:grid!important;width:100%!important;max-width:none!important;flex:none!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:14px;margin:20px 0 16px}
+.cbPaywallMode{display:flex!important;width:100%;min-width:0;min-height:175px;white-space:normal;overflow:visible}
+.cbPaywallMode strong,.cbPaywallMode span{white-space:normal;overflow-wrap:anywhere}
+.cbPaywallMode.active{outline:2px solid rgba(255,181,46,.16);outline-offset:1px}
+.cbPaywallMode[data-paywall-mode="demo"] .cbModeFlag{background:#33270f}
+.cbPaywallMode[data-paywall-mode="off"] .cbModeFlag{background:#183126;color:#9be5b8!important}
+.cbFeatureDirectory{padding-top:46px;padding-bottom:62px}
+.cbToolGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.cbToolCard{display:flex;flex-direction:column;align-items:flex-start;min-width:0;padding:20px;border:1px solid rgba(255,181,46,.17);border-radius:17px;background:linear-gradient(145deg,#171a1c,#0d1011);box-shadow:0 14px 36px rgba(0,0,0,.18)}
+.cbToolIcon{display:grid;place-items:center;width:48px;height:48px;margin-bottom:16px;border-radius:13px;background:rgba(255,181,46,.1);font-size:25px}
+.cbToolCard h3{margin:8px 0;font-size:18px}
+.cbToolCard p{flex:1;margin:0 0 18px;color:#aeb4ba;font-size:13px;line-height:1.6}
+.cbToolCard .btn{width:100%;margin-top:auto;white-space:normal}
+@media(max-width:1050px){.cbPaywallModes{grid-template-columns:repeat(2,minmax(0,1fr))!important}.cbToolGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:620px){.cbPaywallModes{grid-template-columns:1fr!important}.cbPaywallMode{min-height:0}.cbToolGrid{grid-template-columns:1fr}}
