@@ -51,6 +51,7 @@ function renderPaywallModeControls(){
   '<button type="button" class="cbPaywallMode '+(paywallMode==="demo"?"active":"")+'" onclick="setPaywallMode(&quot;demo&quot;)"><span class="cbModeFlag">PRESENTATION</span><strong>Fake Paywall</strong><span>Simulated checkout unlocks the app for testing. No real payment or card charge occurs.</span></button>'+
   '<button type="button" class="cbPaywallMode '+(paywallMode==="off"?"active":"")+'" onclick="setPaywallMode(&quot;off&quot;)"><span class="cbModeFlag">OPEN ACCESS</span><strong>No Paywall</strong><span>Everyone has full access. No subscription screen or checkout is required.</span></button>';
  var price=shell.querySelector(".muted");if(price)price.textContent="Membership concept price: $9.99/month";
+ var billing=$("cbStripeStatus");if(billing){billing.innerHTML=paywallMode==="demo"?"Payment mode: <strong>Simulated checkout only</strong>. No real payment details are collected and no charge is made.":paywallMode==="off"?"Payment mode: <strong>No paywall</strong>. Subscription checkout is bypassed.":stripeConfigured?"Payment processor: <strong>Stripe credentials detected</strong>. Complete a test subscription before enabling live production billing.":"Payment processor: <strong>Not configured</strong>. Real checkout stays disabled until Stripe secret, price, and webhook credentials are added in Vercel."}
 }
 window.setPaywallMode=async function(mode){
  if(!["real","demo","off"].includes(mode))return;
@@ -263,7 +264,6 @@ function startCookingMode(recipeId){
  var r=recipes[recipeId];if(!r)return;
  if(!currentCustomer){window.openAccount();return}
  if(!premiumAllowed()&&recipeSortList().findIndex(function(x){return x.id===recipeId})>=4){if(typeof openSubscription==="function")openSubscription();return}
- if(!krogerConnected){if(typeof status==="function")status("Connect your Kroger account to unlock the full guided recipe experience.","err");if(typeof connectKroger==="function")connectKroger();return}
  cookRecipeId=recipeId;cookSteps=Array.isArray(r.instructions)?r.instructions.slice():[];cookStep=0;if(!cookSteps.length)return;
  ensureCookOverlay();$("cbCookTitle").textContent=r.name+" · Cooking mode";resetCookTimer();renderCookStep();$("cbCookOverlay").classList.add("open");
 }
