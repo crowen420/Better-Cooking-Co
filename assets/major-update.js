@@ -343,6 +343,170 @@ function watchRecipeGrid(){
  var observer=new MutationObserver(function(){renderSmartCombos();if(communityLoaded)renderCommunityCards()});
  observer.observe(grid,{childList:true,subtree:true});
 }
+
+function syncPaywallButtons(){
+ var statusEl=$("devPaywallStatus");
+ if(statusEl){
+  statusEl.textContent=paywallMode==="off"?"NO PAYWALL · FULL ACCESS":paywallMode==="demo"?"FAKE PAYWALL · DEMO CHECKOUT":"REAL PAYWALL · MEMBERSHIP REQUIRED";
+  statusEl.classList.toggle("on",paywallMode!=="off");
+ }
+ [["paywallModeReal","real"],["paywallModeDemo","demo"],["paywallModeOff","off"]].forEach(function(pair){
+  var button=$(pair[0]);if(!button)return;
+  var selected=paywallMode===pair[1];
+  button.classList.toggle("active",selected);
+  button.setAttribute("aria-pressed",selected?"true":"false");
+ });
+ var billing=$("cbStripeStatus");
+ if(billing){
+  billing.innerHTML=paywallMode==="off"?"Payment mode: <strong>No Paywall</strong>. All recipes and technique videos are open.":paywallMode==="demo"?"Payment mode: <strong>Fake Paywall</strong>. Demo checkout never collects card details or charges money.":stripeConfigured?"Payment processor: <strong>Stripe configured</strong>. Complete a test subscription before enabling live billing.":"Payment processor: <strong>Not ready for live billing</strong>. Stripe credentials and authenticated server-side premium-content delivery are both required before a real charge can occur.";
+ }
+ var message=$("devPaywallMsg");
+ if(message)message.textContent=paywallMode==="off"?"No Paywall is active. Full recipes, all cooking steps, and technique videos are available without a subscription.":paywallMode==="demo"?"Fake Paywall is active. Customers see a two-step, three-ingredient preview and can unlock the full experience through simulated checkout. No money is taken.":stripeConfigured?"Real Paywall is active. Customers need a confirmed Stripe membership.":"Real Paywall is selected. Checkout is safely disabled until Stripe and secure premium-content delivery are configured.";
+}
+function syncNavControls(){
+ var rewardButton=$("navRewardsBtn"),rewardPoints=$("navRewardsPoints"),accountButton=$("accountTopBtn"),krogerButton=$("navKrogerBtn"),techniques=$("techniqueNav");
+ if(rewardButton)rewardButton.style.display=currentCustomer?"inline-flex":"none";
+ if(rewardPoints)rewardPoints.textContent=Number(currentCustomer?.points||0).toLocaleString()+" pts";
+ if(accountButton)accountButton.textContent=currentCustomer?(currentCustomer.name||"Your Account"):"Account";
+ if(krogerButton)krogerButton.style.display=krogerConnected?"none":"inline-flex";
+ var heroCta=$("heroPrimaryCta"),trust=document.querySelector(".heroTrustLine"),gate=document.querySelector(".planningGate");
+ if(heroCta)heroCta.textContent=!currentCustomer?"Create your free account":!krogerConnected?"Connect Kroger":"Start planning";
+ if(trust){
+  if(currentCustomer&&krogerConnected){trust.style.display="none"}
+  else{trust.style.display="block";trust.textContent=!currentCustomer?"Sign in once to save your recipes, preferences and rewards.": "Connect Kroger once to match grocery products to your store and build your cart."}
+ }
+ if(gate){
+  var accountGate=$("accountGateDot")?.closest(".gateStatus"),krogerGate=$("krogerGateDot")?.closest(".gateStatus"),start=$("planningStartBtn");
+  if(accountGate)accountGate.style.display=currentCustomer?"none":"flex";
+  if(krogerGate)krogerGate.style.display=krogerConnected?"none":"flex";
+  if(start)start.style.display=currentCustomer&&krogerConnected?"none":"inline-flex";
+  gate.style.display=currentCustomer&&krogerConnected?"none":"grid";
+ }
+ if(techniques)techniques.style.display=(paywallMode==="off"||premiumAllowed())?"inline-flex":"none";
+ var admin=$("developerNav");if(admin)admin.textContent="Admin";
+}
+var previousPlanningGate=window.updatePlanningGate;
+window.updatePlanningGate=function(){
+ if(typeof previousPlanningGate==="function")previousPlanningGate();
+ syncNavControls();
+};
+var previousAccountUpdate=window.updateAccount;
+window.updateAccount=function(customer){
+ if(typeof previousAccountUpdate==="function")previousAccountUpdate(customer);
+ if(customer)currentCustomer=customer;
+ syncNavControls();
+};
+var previousKrogerCheck=window.checkKroger;
+window.checkKroger=async function(){
+ if(typeof previousKrogerCheck==="function")await previousKrogerCheck();
+ syncNavControls();
+ return !!krogerConnected;
+};
+var previousLogout=window.logoutAccount;
+window.logoutAccount=async function(){
+ if(typeof previousLogout==="function")await previousLogout();
+ syncNavControls();
+};
+var previousRewardLoad=window.loadRewardStatus;
+window.loadRewardStatus=async function(){
+ if(typeof previousRewardLoad==="function")await previousRewardLoad();
+ syncNavControls();
+};
+window.loadDeveloperPaywall=async function(){
+ try{
+  var data=await api("/api/admin/settings");
+  paywallMode=["real","demo","off"].includes(data.paywallMode)?data.paywallMode:(data.paywallEnabled?"real":"off");
+  stripeConfigured=!!data.stripeConfigured;paywallEnabled=paywallMode!=="off";
+  syncPaywallButtons();updateSubscriptionModeUI();syncNavControls();
+  if(typeof renderRecipes==="function")renderRecipes();
+ }catch(e){if($("devPaywallMsg"))$("devPaywallMsg").textContent=e.message}
+};
+window.setPaywallMode=async function(mode){
+ if(!["real","demo","off"].includes(mode))return;
+ try{
+  var data=await api("/api/admin/settings",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({paywallMode:mode})});
+  paywallMode=data.paywallMode;stripeConfigured=!!data.stripeConfigured;paywallEnabled=paywallMode!=="off";
+  syncPaywallButtons();updateSubscriptionModeUI();syncNavControls();
+  if(typeof renderRecipes==="function")renderRecipes();
+  if($("recipePage")?.classList.contains("open")&&selectedRecipe&&typeof window.openRecipePage==="function")window.openRecipePage(selectedRecipe);
+  if(paywallMode==="off"&&$("techniqueLibrary")?.style.display==="block")window.openTechniqueLibrary();
+  if(typeof status==="function")status("Access mode changed to "+(mode==="off"?"No Paywall":mode==="demo"?"Fake Paywall":"Real Paywall")+".","ok");
+ }catch(e){if(typeof status==="function")status(e.message,"err")}
+};
+window.setPaywall=async function(enabled){return window.setPaywallMode(enabled?"real":"off")};
+window.openTechniqueLibrary=async function(){
+ if(paywallMode!=="off"&&!premiumAllowed()){
+  if(typeof openSubscription==="function")openSubscription();
+  if(typeof status==="function")status("Technique videos require a membership in the current paywall mode.","ok");
+  return;
+ }
+ $("homeMain")?.classList.remove("hidden");
+ if($("techniqueLibrary"))$("techniqueLibrary").style.display="block";
+ $("techniqueLibrary")?.scrollIntoView({behavior:"smooth"});
+ if(typeof loadMemberTechniques==="function")await loadMemberTechniques();
+};
+function applyPaywallRecipePreview(recipeId){
+ if(!paywallEnabled||premiumAllowed())return;
+ var recipe=typeof recipes!=="undefined"?recipes[recipeId]:null,page=$("recipePage");
+ if(!recipe||!page||!page.classList.contains("open"))return;
+ var firstCard=page.querySelector(".detailGrid .detailCard");
+ if(!firstCard)return;
+ var heading=firstCard.querySelector("h2");
+ if(heading)heading.textContent="Ingredients · preview";
+ firstCard.querySelectorAll(".ingredientList,.recipePreviewIngredients,.recipePreviewCount,.recipeAccessGate").forEach(function(node){node.remove()});
+ var previewBox=document.createElement("div");previewBox.className="recipePreviewIngredients";
+ (recipe.ingredients||[]).slice(0,3).forEach(function(item){var chip=document.createElement("span");chip.textContent=String(item[0]||"Ingredient");previewBox.appendChild(chip)});
+ if(heading)heading.insertAdjacentElement("afterend",previewBox);
+ var remaining=Math.max(0,(recipe.ingredients||[]).length-3),count=document.createElement("div");count.className="recipePreviewCount";
+ count.textContent=remaining?remaining+" more ingredients and all quantities are hidden until membership is unlocked.":"This is a three-ingredient preview.";
+ previewBox.insertAdjacentElement("afterend",count);
+ var howHeading=Array.from(firstCard.querySelectorAll("h2")).find(function(x){return x.textContent.toLowerCase().includes("how to cook")});
+ if(howHeading){
+  var container=howHeading.parentElement;
+  Array.from(container.children).forEach(function(child){if(child!==howHeading)child.remove()});
+  var list=document.createElement("div");list.className="stepList";
+  (recipe.instructions||[]).slice(0,2).forEach(function(instruction,index){
+   var step=document.createElement("div");step.className="step";
+   var number=document.createElement("div");number.className="stepNum";number.textContent=String(index+1);
+   var copy=document.createElement("div");copy.textContent=instruction;
+   step.append(number,copy);list.appendChild(step);
+  });
+  container.appendChild(list);
+  var note=document.createElement("p");note.className="muted";note.textContent="Free preview: 2 cooking steps and 3 ingredients. Unlock the membership to view the complete recipe.";container.appendChild(note);
+  var gate=document.createElement("div");gate.className="recipeAccessGate";
+  var gateTitle=document.createElement("h3");gateTitle.textContent="Unlock the complete recipe";
+  var gateText=document.createElement("p");gateText.textContent="Get all ingredients, quantities, cooking steps, tips and member video lessons.";
+  var gateButton=document.createElement("button");gateButton.type="button";gateButton.className="btn primary";gateButton.textContent="Explore membership";gateButton.addEventListener("click",function(){if(typeof openSubscription==="function")openSubscription()});
+  gate.append(gateTitle,gateText,gateButton);container.appendChild(gate);
+ }
+ var primary=page.querySelector(".recipeHeroContent .actions .btn.primary");
+ if(primary){primary.textContent="Unlock full recipe";primary.onclick=function(){if(typeof openSubscription==="function")openSubscription()}}
+}
+var previousRecipeOpen=window.openRecipePage;
+window.openRecipePage=function(id){
+ if(typeof previousRecipeOpen==="function")previousRecipeOpen(id);
+ setTimeout(function(){decorateRecipePage(id);applyPaywallRecipePreview(id)},0);
+};
+window.startCookingMode=function(recipeId){
+ var recipe=typeof recipes!=="undefined"?recipes[recipeId]:null;
+ if(!recipe)return;
+ if(!currentCustomer){if(typeof openAccount==="function")openAccount();return}
+ var index=typeof recipeSortList==="function"?recipeSortList().findIndex(function(r){return r.id===recipeId}):-1;
+ if(paywallEnabled&&!premiumAllowed()&&index>=4){if(typeof openSubscription==="function")openSubscription();return}
+ cookRecipeId=recipeId;
+ cookSteps=paywallEnabled&&!premiumAllowed()?(recipe.instructions||[]).slice(0,2):(recipe.instructions||[]).slice();
+ cookStep=0;if(!cookSteps.length)return;
+ ensureCookOverlay();$("cbCookTitle").textContent=recipe.name+" · Cooking mode";resetCookTimer();renderCookStep();$("cbCookOverlay").classList.add("open");
+};
+window.redeemDemoReward=function(rewardId,cost,title){
+ var statusBox=$("cbRewardShopStatus");
+ if(!currentCustomer){if(statusBox)statusBox.textContent="Sign in to preview reward redemption.";if(typeof openAccount==="function")openAccount();return}
+ var points=Number(currentCustomer.points||0);
+ if(points<Number(cost)){if(statusBox)statusBox.textContent="You need "+(Number(cost)-points).toLocaleString()+" more points to try "+title+" in the demo shop.";return}
+ if(statusBox)statusBox.textContent="Demo redemption complete: "+title+". No order was placed, nothing will be shipped, and your points were not deducted in this presentation shop.";
+ if(typeof status==="function")status("Demo reward preview: "+title+". No real order was created.","ok");
+};
+
 function initializeMajorUpdate(){
  buildAccountModeTabs();ensureCookOverlay();ensureHouseholdPanel();enhanceStoreField();showStoreDisclaimer();ensureCommunitySection();
  loadPaywallMode();refreshCommunity();renderSmartCombos();watchRecipeGrid();
