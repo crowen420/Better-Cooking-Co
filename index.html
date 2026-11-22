@@ -253,7 +253,7 @@ const recipes={
 };
 let selectedStyle=localStorage.getItem("cbShoppingStyle")||"value",selectedProducts=[],groceryResults=[],selectedRecipe="spaghetti",stores=[],currentCustomer=null;let selectedTaste=new Set(JSON.parse(localStorage.getItem("cbTasteProfile")||"[]"));
 let paywallEnabled=false;
-function isSubscriber(){return String(currentCustomer?.subscription_status||'').toLowerCase()==='active'}
+function isSubscriber(){return typeof window.cbPremiumAllowed==='function'?window.cbPremiumAllowed():String(currentCustomer?.subscription_status||'').toLowerCase()==='active'}
 function openSubscription(){$('homeMain').classList.add('hidden');$('recipePage').classList.remove('open');$('accountPage').classList.remove('open');$('shop').classList.remove('open');$('developerPage')?.classList.remove('open');$('subscriptionPage')?.classList.add('open');window.scrollTo({top:0,behavior:'smooth'});updateSubscriptionUI()}
 function updateSubscriptionUI(){const s=$('subscriptionStatus'),n=$('subscriptionNote');if(!s)return;if(isSubscriber()){s.textContent='ACTIVE MEMBERSHIP';s.classList.add('on');if(n)n.textContent='Your membership is active.'}else{s.textContent='MEMBERSHIP';s.classList.remove('on')}}
 function subscriptionCheckout(){if(isSubscriber())return status('Your membership is already active.','ok');status('Subscription checkout is staged but not connected to a payment processor yet.','ok')}
