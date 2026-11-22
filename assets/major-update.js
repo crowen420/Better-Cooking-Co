@@ -50,9 +50,9 @@ function renderPaywallModeControls(){
  if(!shell)return;
  var bulk=shell.querySelector(".devBulk");
  if(bulk)bulk.innerHTML=
-  '<button type="button" class="cbPaywallMode '+(paywallMode==="real"?"active":"")+'" onclick="setPaywallMode(\\'real\\')"><span class="cbModeFlag">LIVE BILLING</span><strong>Real Paywall</strong><span>Stripe subscription checkout. Live charging remains disabled until billing credentials and webhook are configured.</span></button>'+
-  '<button type="button" class="cbPaywallMode '+(paywallMode==="demo"?"active":"")+'" onclick="setPaywallMode(\\'demo\\')"><span class="cbModeFlag">PRESENTATION</span><strong>Fake Paywall</strong><span>Simulated checkout unlocks the app for testing. No real payment or card charge occurs.</span></button>'+
-  '<button type="button" class="cbPaywallMode '+(paywallMode==="off"?"active":"")+'" onclick="setPaywallMode(\\'off\\')"><span class="cbModeFlag">OPEN ACCESS</span><strong>No Paywall</strong><span>Everyone has full access. No subscription screen or checkout is required.</span></button>';
+  '<button type="button" class="cbPaywallMode '+(paywallMode==="real"?"active":"")+'" onclick="setPaywallMode(&quot;real&quot;)"><span class="cbModeFlag">LIVE BILLING</span><strong>Real Paywall</strong><span>Stripe subscription checkout. Live charging remains disabled until billing credentials and webhook are configured.</span></button>'+
+  '<button type="button" class="cbPaywallMode '+(paywallMode==="demo"?"active":"")+'" onclick="setPaywallMode(&quot;demo&quot;)"><span class="cbModeFlag">PRESENTATION</span><strong>Fake Paywall</strong><span>Simulated checkout unlocks the app for testing. No real payment or card charge occurs.</span></button>'+
+  '<button type="button" class="cbPaywallMode '+(paywallMode==="off"?"active":"")+'" onclick="setPaywallMode(&quot;off&quot;)"><span class="cbModeFlag">OPEN ACCESS</span><strong>No Paywall</strong><span>Everyone has full access. No subscription screen or checkout is required.</span></button>';
  var price=shell.querySelector(".muted");if(price)price.textContent="Membership concept price: $9.99/month";
 }
 window.setPaywallMode=async function(mode){
@@ -107,7 +107,7 @@ function setAccountMode(mode){
  if(title)title.textContent=mode==="signup"?"Create your Cook Better Co. account":"Welcome back";
  if(desc)desc.textContent=mode==="signup"?"Create an account to save your profile, connect your grocery store, and keep your cooking progress.":"Sign in to continue cooking, manage your household, and build your Kroger grocery list.";
  if(actions){var buttons=actions.querySelectorAll("button");if(buttons[0])buttons[0].style.display=mode==="signup"?"inline-flex":"none";if(buttons[1])buttons[1].style.display=mode==="signin"?"inline-flex":"none"}
- if(switcher)switcher.innerHTML=mode==="signup"?'Already have an account? <button type="button" onclick="setAccountMode(\\'signin\\')">Sign in</button>':'New to Cook Better Co.? <button type="button" onclick="setAccountMode(\\'signup\\')">Create an account</button>';
+ if(switcher)switcher.innerHTML=mode==="signup"?'Already have an account? <button type="button" onclick="setAccountMode(&quot;signin&quot;)">Sign in</button>':'New to Cook Better Co.? <button type="button" onclick="setAccountMode(&quot;signup&quot;)">Create an account</button>';
  if(tabs)tabs.querySelectorAll("button").forEach(function(b){b.classList.toggle("active",b.dataset.mode===mode)});
  if($("accountMsg"))$("accountMsg").textContent="";
 }
@@ -196,11 +196,7 @@ function renderSmartCombos(){
  }).join("")+'</div>';
  var section=ensureFeatureSection("smartCombosSection",$("recipes"),html);
  if(section)section.innerHTML=html;
- section?.querySelectorAll("button[data-combo-a]").forEach(function(btn){btn.addEventListener("click",function(){
-  var a=recipes[btn.dataset.comboA],b=recipes[btn.dataset.comboB];if(!a||!b)return;
-  var combo=makeComboRecipe(a,b);recipes[combo.id]=combo;
-  if(typeof openRecipePage==="function")openRecipePage(combo.id);
- })});
+
 }
 function ensureCommunitySection(){
  var section=ensureFeatureSection("communitySection",$("smartCombosSection")||$("recipes"),'<div class="cbSectionIntro"><div class="eyebrow">COOK BETTER COMMUNITY</div><h2>Community <span class="accent">favorites.</span></h2><p>Save recipes you love and see what other home cooks are enjoying.</p></div><div id="cbCommunityGrid" class="cbCommunityGrid"><div class="cbEmptyState">Loading community favorites…</div></div>');
@@ -337,8 +333,9 @@ function enhanceSwapCards(){
  if(!list.length)return;
  grid.innerHTML=list.map(function(p,n){
   var image=p.image||ingredientImage(g.ingredient),price=Number(p.price||0),brand=p.brand||"Kroger selection",description=p.description||g.ingredient;
-  return '<button type="button" class="swapCard cbSwapCard" onclick="chooseSwap(\\''+esc(p.upc)+'\\')"><img src="'+esc(image)+'" alt="'+esc(description)+'" onerror="this.onerror=null;this.src=\\''+esc(ingredientImage(g.ingredient))+'\\'"><div><div class="cbSwapName">'+esc(brand)+' · '+esc(description)+'</div><div class="cbSwapSub">'+(p.size?esc(p.size):"Package size not listed")+'</div><div class="cbSwapPrice">'+(price>0?"$"+price.toFixed(2):"Price unavailable")+'</div><span class="cbSwapPill">'+(n===0?"Top match":"Available at selected store")+'</span></div></button>';
+  return '<button type="button" class="swapCard cbSwapCard" data-cb-swap-upc="'+esc(p.upc)+'"><img src="'+esc(image)+'" alt="'+esc(description)+'"><div><div class="cbSwapName">'+esc(brand)+' · '+esc(description)+'</div><div class="cbSwapSub">'+(p.size?esc(p.size):"Package size not listed")+'</div><div class="cbSwapPrice">'+(price>0?"$"+price.toFixed(2):"Price unavailable")+'</div><span class="cbSwapPill">'+(n===0?"Top match":"Available at selected store")+'</span></div></button>';
  }).join("");
+ grid.querySelectorAll("[data-cb-swap-upc]").forEach(function(button){button.addEventListener("click",function(){if(typeof chooseSwap==="function")chooseSwap(button.dataset.cbSwapUpc)})});
 }
 var baseSwapProduct=window.swapProduct;
 window.swapProduct=async function(i){if(baseSwapProduct)await baseSwapProduct(i);enhanceSwapCards()};
