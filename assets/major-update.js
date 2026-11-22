@@ -17,6 +17,7 @@ function updateSubscriptionModeUI(){
  else if(!stripeConfigured)setModeNotice("Real payment mode is selected, but live checkout is safely disabled until Stripe credentials are present and premium recipe content is delivered through authenticated server-side access. No charge can be made.");
  else setModeNotice("Live subscription checkout is handled by Stripe. Access is enabled after Stripe confirms payment.");
 }
+window.cbPremiumAllowed=premiumAllowed;
 window.isSubscriber=function(){return premiumAllowed()};
 window.updateSubscriptionUI=updateSubscriptionModeUI;
 async function loadPaywallMode(){
