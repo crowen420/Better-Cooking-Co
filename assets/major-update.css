@@ -1,0 +1,65 @@
+
+.cbFeatureSection{padding:54px 4.5%;border-top:1px solid rgba(255,255,255,.06)}
+.cbSectionIntro{max-width:760px;margin-bottom:24px}
+.cbSectionIntro h2{font-size:clamp(25px,3vw,38px);margin:8px 0}
+.cbSectionIntro p{color:var(--muted);line-height:1.65;margin:0}
+.cbComboGrid,.cbCommunityGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.cbFeatureCard{background:linear-gradient(145deg,#17191b,#0e1011);border:1px solid rgba(255,181,46,.17);border-radius:18px;overflow:hidden;box-shadow:0 16px 45px rgba(0,0,0,.2)}
+.cbFeatureCard img{display:block;width:100%;height:190px;object-fit:cover;background:#17191b}
+.cbFeatureBody{padding:18px}
+.cbFeatureBody h3{margin:0 0 8px;font-size:19px}
+.cbFeatureBody p{color:var(--muted);font-size:13px;line-height:1.55;margin:0 0 13px}
+.cbChipRow{display:flex;flex-wrap:wrap;gap:7px;margin:12px 0 16px}
+.cbChip{background:#27231b;color:#f3c16b;border:1px solid rgba(255,181,46,.2);padding:6px 9px;border-radius:999px;font-size:11px;font-weight:750}
+.cbFeatureMeta{color:#b7bbc0;font-size:12px;margin-bottom:13px}
+.cbEmptyState{border:1px dashed #48413a;border-radius:16px;padding:24px;color:#b8b8b8;background:rgba(255,255,255,.02);line-height:1.6}
+.cbRatingLine{display:flex;align-items:center;gap:8px;color:#f6c15b;font-size:13px;font-weight:750;margin:8px 0}
+.cbRatingLine small{color:#aeb2b7;font-weight:500}
+.cbCommunityActions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.cbAccountTabs{display:flex;gap:8px;margin:18px 0 22px}
+.cbAccountTabs button{flex:1;border:1px solid #373b3f;background:#17191b;color:#dfe1e3;border-radius:11px;padding:12px 14px;font-weight:800}
+.cbAccountTabs button.active{background:linear-gradient(135deg,#ffbf47,#f47a1a);color:#17100a;border-color:transparent}
+.cbAccountSwitch{text-align:center;color:#a9adb2;font-size:13px;margin:15px 0 0}
+.cbAccountSwitch button{border:0;background:none;color:var(--gold);font-weight:800;text-decoration:underline}
+.cbPaywallModes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:18px 0}
+.cbPaywallMode{border:1px solid #383d42;background:#151719;border-radius:15px;padding:16px;text-align:left;color:#f1f1f1;min-height:148px}
+.cbPaywallMode strong{display:block;font-size:16px;margin-bottom:7px}
+.cbPaywallMode span{display:block;color:#acb0b4;font-size:12px;line-height:1.5}
+.cbPaywallMode.active{border-color:#ffb52e;background:linear-gradient(145deg,rgba(255,181,46,.13),rgba(244,122,26,.04));box-shadow:0 0 0 1px rgba(255,181,46,.16)}
+.cbModeFlag{display:inline-flex!important;width:max-content;border-radius:999px;padding:5px 8px;background:#282a2c;color:#f5bf62!important;font-size:10px!important;font-weight:900;margin-bottom:10px;letter-spacing:.08em}
+.cbHouseholdPanel{margin-top:18px}
+.cbHouseholdCode{display:flex;gap:9px;align-items:center;flex-wrap:wrap;background:#17191b;border:1px solid #34383c;border-radius:12px;padding:11px;margin:12px 0}
+.cbHouseholdCode code{font-size:18px;font-weight:900;letter-spacing:.14em;color:#ffd17a}
+.cbHouseholdMembers{display:grid;gap:8px;margin-top:15px}
+.cbHouseholdMember{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:1px solid #303438;border-radius:11px;background:#151719}
+.cbHouseholdMember span:last-child{font-size:11px;color:#e9b65b;text-transform:uppercase;letter-spacing:.08em}
+.cbReviewPanel{margin-top:20px}
+.cbReviewForm{display:grid;grid-template-columns:160px 1fr;gap:10px;margin-top:14px}
+.cbReviewForm textarea{min-height:80px;grid-column:1/-1}
+.cbRecipeCommunityHead{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.cbFavoriteBtn{display:inline-flex;align-items:center;gap:8px}
+.cbCookOverlay{position:fixed;inset:0;z-index:1500;background:rgba(0,0,0,.88);backdrop-filter:blur(14px);display:none;align-items:center;justify-content:center;padding:20px}
+.cbCookOverlay.open{display:flex}
+.cbCookCard{width:min(760px,100%);background:linear-gradient(145deg,#191c1e,#0c0e0f);border:1px solid rgba(255,181,46,.25);border-radius:22px;padding:clamp(20px,4vw,36px);box-shadow:0 30px 90px #000}
+.cbCookTop{display:flex;justify-content:space-between;align-items:center;gap:14px}
+.cbCookProgress{height:6px;background:#343638;border-radius:99px;overflow:hidden;margin:20px 0 28px}
+.cbCookProgress span{height:100%;display:block;background:linear-gradient(90deg,#ffb52e,#ff6b16);transition:width .25s}
+.cbCookStepLabel{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#f5bb55;font-weight:850}
+.cbCookInstruction{font-size:clamp(21px,3vw,31px);line-height:1.5;min-height:160px;display:flex;align-items:center;margin:20px 0 26px}
+.cbCookActions{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.cbTimerPanel{border-top:1px solid #35383a;padding-top:19px;margin-top:22px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.cbTimerClock{font-size:22px;font-variant-numeric:tabular-nums;font-weight:900;color:#ffd17a;min-width:86px}
+.cbTimerPanel select{max-width:145px}
+.cbStoreNote{font-size:11px;color:#aeb2b7;line-height:1.5;margin-top:8px}
+.cbModeNotice{border-left:3px solid #ffb52e;background:rgba(255,181,46,.07);padding:12px 14px;border-radius:0 10px 10px 0;color:#c8cbd0;font-size:12px;line-height:1.55;margin:14px 0}
+.cbDemoLabel{display:inline-flex;gap:7px;align-items:center;border:1px solid rgba(255,181,46,.35);background:rgba(255,181,46,.1);color:#ffd17a;border-radius:999px;padding:7px 10px;font-size:11px;font-weight:850;letter-spacing:.04em}
+.cbSwapCard{display:grid!important;grid-template-columns:108px 1fr;gap:13px;align-items:center;text-align:left;padding:12px!important;border:1px solid #34393e!important;background:#171a1c!important;border-radius:15px!important;color:#f5f5f5!important;width:100%}
+.cbSwapCard:hover{border-color:#ffb52e!important;transform:translateY(-1px)}
+.cbSwapCard img{width:108px;height:112px;object-fit:cover;border-radius:10px;background:#27292b}
+.cbSwapName{font-weight:850;font-size:14px;line-height:1.35}
+.cbSwapSub{color:#aeb4b9;font-size:11px;line-height:1.5;margin-top:5px}
+.cbSwapPrice{font-size:16px;color:#ffd17a;font-weight:900;margin-top:7px}
+.cbSwapPill{display:inline-block;margin-top:6px;color:#d1d4d7;background:#292d30;padding:4px 7px;border-radius:999px;font-size:10px}
+.cbCommunitySmall{font-size:12px;color:#b8bdc1;margin:8px 0}
+@media(max-width:820px){.cbComboGrid,.cbCommunityGrid{grid-template-columns:repeat(2,minmax(0,1fr))}.cbPaywallModes{grid-template-columns:1fr}.cbReviewForm{grid-template-columns:1fr}}
+@media(max-width:560px){.cbComboGrid,.cbCommunityGrid{grid-template-columns:1fr}.cbFeatureCard img{height:170px}.cbSwapCard{grid-template-columns:88px 1fr}.cbSwapCard img{width:88px;height:96px}.cbCookOverlay{padding:10px}.cbCookInstruction{min-height:190px}}
