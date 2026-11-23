@@ -622,7 +622,7 @@ function initializeMajorUpdate(){
  buildAccountModeTabs();ensureCookOverlay();ensureHouseholdPanel();enhanceStoreField();showStoreDisclaimer();ensureCommunitySection();
  loadPaywallMode();refreshCommunity();renderSmartCombos();ensureFeatureDirectory();watchRecipeGrid();syncNavControls();
  var featureStrip=$("featureStrip");
- if(featureStrip){var routes=["guided","techniques","shopping","learning"];Array.from(featureStrip.querySelectorAll(".feature")).forEach(function(card,i){card.setAttribute("role","button");card.setAttribute("tabindex","0");card.dataset.cbFeatureRoute=routes[i]||"learning";card.addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();openFeaturePage(card.dataset.cbFeatureRoute)}})})}
+ if(featureStrip){Array.from(featureStrip.querySelectorAll(".feature[data-cb-feature-route]")).forEach(function(card){card.addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();openFeaturePage(card.dataset.cbFeatureRoute)}})})}
  if($("learn"))$("learn").style.display="none";if($("account"))$("account").style.display="none";
 
  if(currentCustomer){refreshHousehold();applySavedZipAndStore()}
