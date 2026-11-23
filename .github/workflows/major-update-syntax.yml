@@ -5,7 +5,7 @@ on:
       - cook-better-major-update
   pull_request:
     branches:
-      - cook-better-major-update
+      - main
   workflow_dispatch:
 jobs:
   syntax:
