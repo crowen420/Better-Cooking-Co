@@ -260,7 +260,7 @@ function ensureCommunitySection(){
 }
 function stars(n){var count=Math.max(0,Math.min(5,Math.round(Number(n)||0)));return "★".repeat(count)+"☆".repeat(5-count)}
 function recipePreferenceWarnings(recipe){
- var profile=currentCustomer||{},avoids=profile.dietary_preferences||[],equipment=profile.equipment_preferences||[];
+ var profile=currentCustomer||{},avoids=Array.isArray(profile.dietary_preferences)&&profile.dietary_preferences.length?profile.dietary_preferences:[...(selectedAvoid||[])],equipment=Array.isArray(profile.equipment_preferences)&&profile.equipment_preferences.length?profile.equipment_preferences:[...(selectedEquipment||[])];
  var ingredients=(recipe.ingredients||[]).map(function(x){return Array.isArray(x)?String(x[0]||""):String(x.name||"")}).join(" ").toLowerCase();
  var source=(String(recipe.name||"")+" "+String(recipe.description||"")+" "+ingredients+" "+(recipe.instructions||[]).join(" ")).toLowerCase();
  var rules={
