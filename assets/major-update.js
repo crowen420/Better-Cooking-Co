@@ -182,18 +182,59 @@ function ensureFeatureDirectory(){
  '</div>';
  return ensureFeatureSection("cbFeatureDirectory",$("featureStrip")||$("hero"),markup);
 }
-function handleExploreAction(action){
- var target=null,message="";
- if(action==="combinations")target=$("smartCombosSection");
- else if(action==="community")target=$("communitySection");
- else if(action==="household"){if(typeof window.openAccount==="function")window.openAccount();return}
- else if(action==="techniques"){if(typeof window.openTechniqueLibrary==="function")window.openTechniqueLibrary();return}
- else if(action==="guided"){target=$("recipes");message="Open a recipe, then choose Guided cooking mode for step navigation and timers."}
- else if(action==="nutrition"){target=$("recipes");message="Choose Nutrition on any recipe card to view its estimated per-serving values."}
- else if(action==="shopping"){target=$("recipes");message="Open a recipe and build its grocery list. Choose your ZIP code and Kroger store in the grocery builder."}
- else if(action==="substitutions"){target=$("recipes");message="Open a recipe, build the grocery list, then use Swap on a product to compare alternatives."}
- if(target){target.scrollIntoView({behavior:"smooth",block:"start"});if(message&&typeof status==="function")status(message,"ok")}
+var activeFeatureNode=null,activeFeaturePlaceholder=null;
+function ensureFeaturePage(){
+ var page=$("cbFeaturePage");if(page)return page;
+ page=document.createElement("main");page.id="cbFeaturePage";page.className="cbFeaturePage";
+ var dev=$("developerPage");if(dev&&dev.parentNode)dev.parentNode.insertBefore(page,dev);else document.body.appendChild(page);
+ return page;
 }
+function restoreFeatureNode(){
+ if(activeFeatureNode&&activeFeaturePlaceholder&&activeFeaturePlaceholder.parentNode){
+  activeFeaturePlaceholder.parentNode.insertBefore(activeFeatureNode,activeFeaturePlaceholder);
+  activeFeaturePlaceholder.remove();activeFeatureNode.style.display="none";delete activeFeatureNode.dataset.cbFeaturePage;
+ }
+ activeFeatureNode=null;activeFeaturePlaceholder=null;
+}
+function closeFeaturePage(){
+ restoreFeatureNode();var page=$("cbFeaturePage");if(page){page.classList.remove("open");page.innerHTML="";page.style.display="none"}
+ $("homeMain")?.classList.remove("hidden");window.scrollTo({top:0,behavior:"smooth"});
+}
+async function openFeaturePage(action){
+ if(action==="household"){if(typeof window.openAccount==="function")window.openAccount();return}
+ if(action==="techniques"){
+  if(typeof window.openTechniqueLibrary==="function")await window.openTechniqueLibrary();
+  var tech=$("techniqueLibrary");if(!tech||tech.style.display==="none")return;
+  action="techniques";
+ }
+ if(action==="community")await refreshCommunity();
+ if(action==="combinations")renderSmartCombos();
+ var config={
+  combinations:{title:"Smart meal combinations",subtitle:"Pair meals that share ingredients, then shop once for both." ,source:"smartCombosSection"},
+  community:{title:"Community favorites",subtitle:"Real ratings and written reviews from Cook Better Co. cooks.",source:"communitySection"},
+  learning:{title:"Learn to cook and improve",subtitle:"Build real skills with technique lessons and recipe videos.",source:"learn"},
+  techniques:{title:"Quick shopping & cooking techniques",subtitle:"Short technique lessons from Cook Better Co.",source:"techniqueLibrary"},
+  guided:{title:"Guided cooking",subtitle:"Choose a recipe and follow its cooking steps one at a time.",source:"recipes"},
+  nutrition:{title:"Nutrition estimates",subtitle:"Explore per-serving estimates on each recipe.",source:"recipes"},
+  shopping:{title:"Grocery shopping",subtitle:"Choose a meal and build a store-aware shopping list.",source:"recipes"},
+  substitutions:{title:"Product substitutions",subtitle:"Compare product alternatives, package sizes, and prices.",source:"recipes"}
+ };
+ var c=config[action];if(!c)return;
+ var source=$(c.source);if(!source)return;
+ closeFeaturePage();
+ var page=ensureFeaturePage();page.innerHTML='<div class="cbFeaturePageInner"><div class="cbFeaturePageHead"><button class="btn secondary" type="button" data-cb-back>← Back to Home</button><div class="eyebrow">COOK BETTER CO. · EXPLORE</div><h1>'+esc(c.title)+'</h1><p class="muted">'+esc(c.subtitle)+'</p></div><div class="cbFeaturePageContent" id="cbFeaturePageContent"></div></div>';
+ var content=$("cbFeaturePageContent");
+ if(action==="guided"||action==="nutrition"||action==="shopping"||action==="substitutions"){
+  var recipeGrid=$("recipeGrid");
+  if(recipeGrid){var intro=document.createElement("div");intro.className="cbFeaturePageHint";intro.textContent=action==="guided"?"Open a recipe and choose Guided Cooking Mode.":action==="nutrition"?"Open a recipe and select its Nutrition option.":action==="shopping"?"Open a recipe and build your grocery list.":"Open a recipe, build its grocery list, and choose Swap beside an item.";content.appendChild(intro);var grid=recipeGrid.cloneNode(true);grid.removeAttribute("id");content.appendChild(grid)}
+ }else{
+  activeFeaturePlaceholder=document.createComment("Cook Better Co. feature return point");
+  source.parentNode.insertBefore(activeFeaturePlaceholder,source);content.appendChild(source);activeFeatureNode=source;source.style.display="block";source.dataset.cbFeaturePage="1";
+ }
+ $("homeMain")?.classList.add("hidden");page.style.display="block";page.classList.add("open");window.scrollTo({top:0,behavior:"smooth"});
+}
+function handleExploreAction(action){openFeaturePage(action)}
+
 
 function renderSmartCombos(){
  if(typeof recipes==="undefined"||typeof recipeSortList!=="function")return;
@@ -231,7 +272,9 @@ function renderCommunityCards(){
  if(!list.length){box.innerHTML='<div class="cbEmptyState">Recipes will appear here as the community saves and rates them.</div>';return}
  box.innerHTML=list.map(function(r){
   var data=communityData[r.id]||{},average=Number(data.average||0),count=Number(data.count||0),favorites=Number(data.favorites||0),isFav=!!data.favorited;
-  return '<article class="cbFeatureCard"><img src="'+esc(r.img||"")+'" alt="'+esc(r.name)+'"><div class="cbFeatureBody"><h3>'+esc(r.name)+'</h3><div class="cbRatingLine">'+stars(average)+' <small>'+(count?average.toFixed(1)+" · "+count+" ratings":"No ratings yet")+'</small></div><div class="cbFeatureMeta">'+favorites+' saved by the community</div><div class="cbCommunityActions"><button class="btn secondary" type="button" data-community-open="'+esc(r.id)+'">View recipe</button><button class="btn '+(isFav?"secondary":"primary")+'" type="button" data-community-fav="'+esc(r.id)+'">'+(isFav?"♥ Saved":"♡ Save favorite")+'</button></div></div></article>';
+  var reviews=(data.reviews||[]).filter(function(x){return String(x.review||"").trim()}).slice(0,2);
+  var reviewHtml=reviews.length?'<div class="cbReviewSnippets">'+reviews.map(function(x){return '<blockquote class="cbReviewQuote"><div class="cbRatingLine">'+stars(x.rating)+' <small>'+esc(x.reviewer||"Community cook")+'</small></div><p>'+esc(x.review)+'</p></blockquote>'}).join("")+'</div>':'<p class="cbNoReviews">No written reviews yet. Be the first to share what you thought.</p>';
+  return '<article class="cbFeatureCard"><img src="'+esc(r.img||"")+'" alt="'+esc(r.name)+'"><div class="cbFeatureBody"><h3>'+esc(r.name)+'</h3><div class="cbRatingLine">'+stars(average)+' <small>'+(count?average.toFixed(1)+" · "+count+" ratings":"No ratings yet")+'</small></div><div class="cbFeatureMeta">'+favorites+' saved by the community</div>'+reviewHtml+'<div class="cbCommunityActions"><button class="btn secondary" type="button" data-community-open="'+esc(r.id)+'">View recipe</button><button class="btn '+(isFav?"secondary":"primary")+'" type="button" data-community-fav="'+esc(r.id)+'">'+(isFav?"♥ Saved":"♡ Save favorite")+'</button></div></div></article>';
  }).join("");
 }
 async function toggleCommunityFavorite(recipeId){
@@ -247,7 +290,9 @@ function decorateRecipePage(recipeId){
  var grid=page.querySelector(".detailGrid");if(!grid||$("cbRecipeCommunity"))return;
  var data=communityData[recipeId]||{},isFav=!!data.favorited,avg=Number(data.average||0),count=Number(data.count||0);
  var panel=document.createElement("div");panel.id="cbRecipeCommunity";panel.className="detailCard cbReviewPanel";
- panel.innerHTML='<div class="cbRecipeCommunityHead"><div><h2>Community feedback</h2><div class="cbRatingLine">'+stars(avg)+' <small>'+(count?avg.toFixed(1)+' · '+count+' ratings':'Be the first to rate this recipe')+'</small></div></div><button class="btn secondary cbFavoriteBtn" type="button" id="cbRecipeFavorite">'+(isFav?'♥ Saved to favorites':'♡ Save to favorites')+'</button></div><div class="cbCommunitySmall">'+(data.favorites||0)+' cooks saved this recipe.</div><div class="cbReviewForm"><div class="field"><label for="cbRatingValue">Your rating</label><select id="cbRatingValue"><option value="5">5 stars — Loved it</option><option value="4">4 stars — Really good</option><option value="3">3 stars — Good</option><option value="2">2 stars — Not for me</option><option value="1">1 star — Needs work</option></select></div><div class="field"><label for="cbReviewText">Review (optional)</label><textarea id="cbReviewText" maxlength="500" placeholder="What did you think of this recipe?"></textarea></div><button class="btn primary" type="button" id="cbSubmitReview">Submit rating</button></div>';
+ var reviewRows=(data.reviews||[]).filter(function(x){return String(x.review||"").trim()});
+ var reviewList=reviewRows.length?'<div class="cbReviewList"><h3>What cooks are saying</h3>'+reviewRows.map(function(x){return '<article class="cbReviewQuote"><div class="cbRatingLine">'+stars(x.rating)+' <small>'+esc(x.reviewer||"Community cook")+' · '+(x.createdAt?esc(new Date(x.createdAt).toLocaleDateString()):"")+'</small></div><p>'+esc(x.review)+'</p></article>'}).join("")+'</div>':'<p class="cbNoReviews">No written reviews yet. Your review can help the next cook.</p>';
+ panel.innerHTML='<div class="cbRecipeCommunityHead"><div><h2>Community feedback</h2><div class="cbRatingLine">'+stars(avg)+' <small>'+(count?avg.toFixed(1)+' · '+count+' ratings':'Be the first to rate this recipe')+'</small></div></div><button class="btn secondary cbFavoriteBtn" type="button" id="cbRecipeFavorite">'+(isFav?'♥ Saved to favorites':'♡ Save to favorites')+'</button></div><div class="cbCommunitySmall">'+(data.favorites||0)+' cooks saved this recipe.</div>'+reviewList+'<div class="cbReviewForm"><div class="field"><label for="cbRatingValue">Your rating</label><select id="cbRatingValue"><option value="5">5 stars — Loved it</option><option value="4">4 stars — Really good</option><option value="3">3 stars — Good</option><option value="2">2 stars — Not for me</option><option value="1">1 star — Needs work</option></select></div><div class="field"><label for="cbReviewText">Review (optional)</label><textarea id="cbReviewText" maxlength="500" placeholder="What did you think of this recipe?"></textarea></div><button class="btn primary" type="button" id="cbSubmitReview">Submit review</button></div>';
  grid.appendChild(panel);
  $("cbRecipeFavorite")?.addEventListener("click",function(){toggleCommunityFavorite(recipeId)});
  $("cbSubmitReview")?.addEventListener("click",function(){submitCommunityRating(recipeId)});
@@ -325,8 +370,8 @@ function renderHousehold(data){
   box.innerHTML='<div class="field"><label for="cbHouseholdName">Household name</label><input id="cbHouseholdName" maxlength="80" placeholder="The Owen household"></div><button type="button" class="btn primary" id="cbCreateHousehold">Create household</button><div class="cbModeNotice">Already have an invite? Join a household below.</div><div class="field"><label for="cbHouseholdInvite">Invite code</label><input id="cbHouseholdInvite" maxlength="8" placeholder="8-character code" autocapitalize="characters"></div><button type="button" class="btn secondary" id="cbJoinHousehold">Join household</button><div class="status" id="cbHouseholdStatus"></div>';
   $("cbCreateHousehold").addEventListener("click",createHousehold);$("cbJoinHousehold").addEventListener("click",joinHousehold);return;
  }
- var h=data.household;
- box.innerHTML='<div class="accountMini"><strong>'+esc(h.name)+'</strong><span class="muted">'+(data.members||[]).length+' household member(s)</span></div><div class="cbHouseholdCode"><div><div class="eyebrow">INVITE CODE</div><code>'+esc(h.inviteCode)+'</code></div><button class="btn secondary" type="button" id="cbCopyInvite">Copy code</button></div><div class="cbHouseholdMembers">'+(data.members||[]).map(function(m){return '<div class="cbHouseholdMember"><strong>'+esc(m.name)+'</strong><span>'+esc(m.role)+'</span></div>'}).join("")+'</div><div class="status">Share the invite code with family members so they can join this household.</div>';
+ var h=data.household,memberCount=(data.members||[]).length,atLimit=memberCount>=5;
+ box.innerHTML='<div class="accountMini"><strong>'+esc(h.name)+'</strong><span class="muted">'+memberCount+' of 5 household members</span></div><div class="cbHouseholdCode"><div><div class="eyebrow">INVITE CODE</div><code>'+esc(h.inviteCode)+'</code></div><button class="btn secondary" type="button" id="cbCopyInvite">Copy code</button></div><div class="cbHouseholdMembers">'+(data.members||[]).map(function(m){return '<div class="cbHouseholdMember"><strong>'+esc(m.name)+'</strong><span>'+esc(m.role)+'</span></div>'}).join("")+'</div><div class="status">'+(atLimit?'Your household has reached the five-person limit.':'Share the invite code with up to '+(5-memberCount)+' more household member(s).')+'</div>';
  $("cbCopyInvite").addEventListener("click",function(){if(navigator.clipboard?.writeText)navigator.clipboard.writeText(h.inviteCode).then(function(){if(typeof status==="function")status("Household invite code copied.","ok")});else if(typeof status==="function")status("Invite code: "+h.inviteCode,"ok")});
 }
 async function createHousehold(){
@@ -384,21 +429,28 @@ function syncNavControls(){
  var rewardButton=$("navRewardsBtn"),rewardPoints=$("navRewardsPoints"),accountButton=$("accountTopBtn"),krogerButton=$("navKrogerBtn"),techniques=$("techniqueNav");
  if(rewardButton)rewardButton.style.display=currentCustomer?"inline-flex":"none";
  if(rewardPoints)rewardPoints.textContent=Number(currentCustomer?.points||0).toLocaleString()+" pts";
- if(accountButton)accountButton.textContent=currentCustomer?(currentCustomer.name||"Your Account"):"Account";
- if(krogerButton)krogerButton.style.display=krogerConnected?"none":"inline-flex";
- var heroCta=$("heroPrimaryCta"),trust=document.querySelector(".heroTrustLine"),gate=document.querySelector(".planningGate");
- if(heroCta)heroCta.textContent=!currentCustomer?"Create your free account":!krogerConnected?"Connect Kroger":"Start planning";
- if(trust){
-  if(currentCustomer&&krogerConnected){trust.style.display="none"}
-  else{trust.style.display="block";trust.textContent=!currentCustomer?"Sign in once to save your recipes, preferences and rewards.": "Connect Kroger once to match grocery products to your store and build your cart."}
+ if(accountButton)accountButton.textContent=currentCustomer?(currentCustomer.name||"Account"):"Account";
+ if(krogerButton){
+  krogerButton.style.display="inline-flex";
+  krogerButton.setAttribute("aria-label",krogerConnected?"Kroger connected":"Connect Kroger");
+  var label=$("krogerBtnText");
+  if(label)label.textContent=krogerConnected?"✓ Kroger Connected":"Connect Kroger";
+  krogerButton.onclick=krogerConnected?function(){if(typeof status==="function")status("Kroger is connected. Manage your grocery account from this button.","ok")}:function(){if(typeof window.connectKroger==="function")window.connectKroger()};
  }
- if(gate){
-  var accountGate=$("accountGateDot")?.closest(".gateStatus"),krogerGate=$("krogerGateDot")?.closest(".gateStatus"),start=$("planningStartBtn");
-  if(accountGate)accountGate.style.display=currentCustomer?"none":"flex";
-  if(krogerGate)krogerGate.style.display=krogerConnected?"none":"flex";
-  if(start)start.style.display=currentCustomer&&krogerConnected?"none":"inline-flex";
-  gate.style.display=currentCustomer&&krogerConnected?"none":"grid";
+ var heroCta=$("heroPrimaryCta"),trust=document.querySelector(".heroTrustLine"),gate=$("planningGate");
+ if(heroCta){
+  if(currentCustomer){heroCta.style.display="none"}
+  else{heroCta.style.display="inline-flex";heroCta.textContent="Create your free account";heroCta.onclick=function(){window.openAccount()}}
  }
+ if(trust)trust.style.display="none";
+ // Connection and sign-in prompts live only in the top navigation.
+ if(gate)gate.style.display="none";
+ var planningSteps=document.querySelector(".planningSteps");
+ if(planningSteps)planningSteps.innerHTML='<div class="planningStep"><b>01</b><span>Choose meals</span></div><div class="planningStep"><b>02</b><span>Learn as you cook</span></div><div class="planningStep"><b>03</b><span>Shop your list</span></div>';
+ var homeAccount=$("account");if(homeAccount)homeAccount.style.display="none";
+ var learnSection=$("learn");if(learnSection&&!learnSection.dataset.cbFeaturePage)learnSection.style.display="none";
+ var combos=$("smartCombosSection");if(combos&&!combos.dataset.cbFeaturePage)combos.style.display="none";
+ var community=$("communitySection");if(community&&!community.dataset.cbFeaturePage)community.style.display="none";
  if(techniques)techniques.style.display=(paywallMode==="off"||premiumAllowed())?"inline-flex":"none";
  var admin=$("developerNav");if(admin)admin.textContent="Admin";
 }
@@ -524,7 +576,11 @@ window.redeemDemoReward=function(rewardId,cost,title){
 
 function initializeMajorUpdate(){
  buildAccountModeTabs();ensureCookOverlay();ensureHouseholdPanel();enhanceStoreField();showStoreDisclaimer();ensureCommunitySection();
- loadPaywallMode();refreshCommunity();renderSmartCombos();ensureFeatureDirectory();watchRecipeGrid();
+ loadPaywallMode();refreshCommunity();renderSmartCombos();ensureFeatureDirectory();watchRecipeGrid();syncNavControls();
+ var featureStrip=$("featureStrip");
+ if(featureStrip){var routes=["guided","techniques","shopping","learning"];Array.from(featureStrip.querySelectorAll(".feature")).forEach(function(card,i){card.setAttribute("role","button");card.setAttribute("tabindex","0");card.dataset.cbFeatureRoute=routes[i]||"learning";card.addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();openFeaturePage(card.dataset.cbFeatureRoute)}})})}
+ if($("learn"))$("learn").style.display="none";if($("account"))$("account").style.display="none";
+
  if(currentCustomer){refreshHousehold();applySavedZipAndStore()}
  var app=document.querySelector("#accountModal .modalCard");if(app){app.addEventListener("keydown",function(e){if(e.key==="Enter"&&e.target.tagName==="INPUT"&&e.target.id!=="accountPasswordConfirm"){e.preventDefault();if($("cbAccountModeTabs")?.querySelector("button.active")?.dataset.mode==="signup")window.registerAccount();else window.loginAccount()}})}
  if(new URLSearchParams(location.search).get("payment")==="success"){if(typeof status==="function")status("Payment completed. Your membership will unlock after Stripe confirms the subscription.","ok");history.replaceState({},document.title,location.pathname)}
@@ -533,6 +589,9 @@ function initializeMajorUpdate(){
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",initializeMajorUpdate);else initializeMajorUpdate();
 window.addEventListener("focus",function(){if(currentCustomer)refreshHousehold()});
 document.addEventListener("click",function(e){
+ var back=e.target.closest("[data-cb-back]");if(back){closeFeaturePage();return}
+ var feature=e.target.closest("[data-cb-feature-route]");if(feature){openFeaturePage(feature.dataset.cbFeatureRoute);return}
+ var quiz=e.target.closest("[data-cb-quiz]");if(quiz){if(typeof window.openPreferences==="function")window.openPreferences();return}
  var explore=e.target.closest("[data-cb-explore]");if(explore)handleExploreAction(explore.dataset.cbExplore);
  var combo=e.target.closest("[data-combo-a]");if(combo){var a=recipes[combo.dataset.comboA],b=recipes[combo.dataset.comboB];if(a&&b){var r=makeComboRecipe(a,b);recipes[r.id]=r;window.openRecipePage(r.id)}}
  var open=e.target.closest("[data-community-open]");if(open)window.openRecipePage(open.dataset.communityOpen);
