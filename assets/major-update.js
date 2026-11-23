@@ -202,6 +202,7 @@ function closeFeaturePage(){
 }
 async function openFeaturePage(action){
  if(action==="household"){if(typeof window.openAccount==="function")window.openAccount();return}
+ if(typeof trackEvent==="function")trackEvent("pageview",{path:"/features/"+encodeURIComponent(action)});
  if(action==="techniques"){
   if(typeof window.openTechniqueLibrary==="function")await window.openTechniqueLibrary();
   var tech=$("techniqueLibrary");if(!tech||tech.style.display==="none")return;
@@ -599,6 +600,7 @@ function applyPaywallRecipePreview(recipeId){
 var previousRecipeOpen=window.openRecipePage;
 window.openRecipePage=function(id){
  if(typeof previousRecipeOpen==="function")previousRecipeOpen(id);
+ if(typeof trackEvent==="function")trackEvent("pageview",{path:"/recipes/"+encodeURIComponent(id),recipeId:id});
  setTimeout(function(){decorateRecipePage(id);applyPaywallRecipePreview(id)},0);
 };
 window.startCookingMode=function(recipeId){
