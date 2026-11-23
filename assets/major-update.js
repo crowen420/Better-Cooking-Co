@@ -284,8 +284,9 @@ function recipePreferenceWarnings(recipe){
   {name:"Slow cooker",pattern:/\bslow cooker\b/},
   {name:"Pressure cooker / Instant Pot",pattern:/\b(pressure cooker|instant pot)\b/}
  ];
- if(required.length){checks.forEach(function(check){if(required.some(function(x){return x.toLowerCase()===check.name.toLowerCase()})&&!equipment.includes(check.name))warnings.push("This recipe lists "+check.name+" as required, but it is not in your equipment profile")})}
- else if(equipment.length){checks.forEach(function(check){if(check.pattern.test(source)&&!equipment.includes(check.name))warnings.push("The instructions may need "+check.name+", which is not in your equipment profile")})}
+ function hasEquipment(name){if(equipment.includes(name))return true;if(name==="Stovetop"&&equipment.includes("Hot plate"))return true;if(name==="Oven"&&equipment.includes("Toaster oven"))return true;return false}
+ if(required.length){checks.forEach(function(check){if(required.some(function(x){return x.toLowerCase()===check.name.toLowerCase()})&&!hasEquipment(check.name))warnings.push("This recipe lists "+check.name+" as required, but it is not in your equipment profile")})}
+ else if(equipment.length){checks.forEach(function(check){if(check.pattern.test(source)&&!hasEquipment(check.name))warnings.push("The instructions may need "+check.name+", which is not in your equipment profile")})}
  if(equipment.includes("No full kitchen")&&!equipment.includes("Stovetop")&&!equipment.includes("Hot plate")&&!equipment.includes("Microwave")&&!equipment.includes("Air fryer")&&!equipment.includes("Electric kettle"))warnings.push("Your profile says you do not have a full kitchen; check the equipment needed before starting");
  return warnings;
 }
