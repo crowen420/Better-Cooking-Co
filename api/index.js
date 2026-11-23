@@ -324,10 +324,8 @@ async function communityRecipes(req,res){
  const groups={},favGroups={};
  for(const row of ratings)(groups[row.recipe_id]??=[]).push(row);
  for(const row of favorites)(favGroups[row.recipe_id]??=[]).push(row.user_id);
- const userIds=[...new Set((ratings||[]).map(x=>x.user_id).filter(Boolean))];
- const profiles=userIds.length?await supa("/rest/v1/profiles?id=in.("+userIds.join(",")+")&select=id,name"):[],names=new Map(profiles.map(x=>[x.id,x.name]));
  const summary={};
- for(const id of Object.keys(groups)){const rows=groups[id],mine=u?rows.find(x=>x.user_id===u.id):null;summary[id]={count:rows.length,average:rows.reduce((n,x)=>n+Number(x.rating||0),0)/rows.length,reviews:rows.filter(x=>String(x.review||"").trim()).slice(0,8).map(x=>({rating:x.rating,review:x.review,reviewer:names.get(x.user_id)||"Community cook",createdAt:x.created_at})),userRating:mine?.rating||0,userReview:mine?.review||""}}
+ for(const id of Object.keys(groups)){const rows=groups[id],mine=u?rows.find(x=>x.user_id===u.id):null;summary[id]={count:rows.length,average:rows.reduce((n,x)=>n+Number(x.rating||0),0)/rows.length,reviews:rows.filter(x=>String(x.review||"").trim()).slice(0,8).map(x=>({rating:x.rating,review:x.review,reviewer:"Community cook",createdAt:x.created_at})),userRating:mine?.rating||0,userReview:mine?.review||""}}
  for(const id of Object.keys(favGroups)){summary[id]??={count:0,average:0,reviews:[],userRating:0,userReview:""};summary[id].favorites=favGroups[id].length;summary[id].favorited=!!u&&favGroups[id].includes(u.id)}
  return json(res,200,{recipes:summary,loggedIn:!!u});
 }
