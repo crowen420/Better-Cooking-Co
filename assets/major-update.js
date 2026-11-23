@@ -259,11 +259,53 @@ function ensureCommunitySection(){
  return section;
 }
 function stars(n){var count=Math.max(0,Math.min(5,Math.round(Number(n)||0)));return "★".repeat(count)+"☆".repeat(5-count)}
+function recipePreferenceWarnings(recipe){
+ var profile=currentCustomer||{},avoids=profile.dietary_preferences||[],equipment=profile.equipment_preferences||[];
+ var ingredients=(recipe.ingredients||[]).map(function(x){return Array.isArray(x)?String(x[0]||""):String(x.name||"")}).join(" ").toLowerCase();
+ var source=(String(recipe.name||"")+" "+String(recipe.description||"")+" "+ingredients+" "+(recipe.instructions||[]).join(" ")).toLowerCase();
+ var rules={
+  "No Beef":/\b(beef|steak|brisket|meatballs?|hamburger)\b/,
+  "No Pork":/\b(pork|bacon|ham|prosciutto|pancetta)\b/,
+  "No Seafood":/\b(shrimp|salmon|tuna|cod|fish|seafood|crab|lobster|scallop)\b/,
+  "No Dairy":/\b(milk|cream|cheese|butter|yogurt|whey)\b/,
+  "No Eggs":/\b(egg|eggs|mayonnaise)\b/,
+  "Gluten-Free":/\b(wheat|flour|bread|pasta|noodles|breadcrumbs|soy sauce)\b/,
+  "Nut-Free":/\b(peanut|almond|cashew|walnut|pecan|pistachio|hazelnut)\b/,
+  "Vegetarian":/\b(beef|steak|pork|bacon|ham|chicken|turkey|shrimp|salmon|fish|seafood|sausage|ground meat)\b/
+ };
+ var warnings=[];
+ avoids.filter(function(x){return x!=="None"}).forEach(function(rule){if(rules[rule]&&rules[rule].test(source))warnings.push("May conflict with your "+rule+" preference")});
+ var required=Array.isArray(recipe.equipment)?recipe.equipment.map(String):[];
+ var checks=[
+  {name:"Oven",pattern:/\b(oven|roast|bake|broil)\b/},
+  {name:"Stovetop",pattern:/\b(stovetop|skillet|saucepan|simmer|pan-sear|boil)\b/},
+  {name:"Air fryer",pattern:/\bair fryer\b/},
+  {name:"Microwave",pattern:/\bmicrowave\b/},
+  {name:"Slow cooker",pattern:/\bslow cooker\b/},
+  {name:"Pressure cooker / Instant Pot",pattern:/\b(pressure cooker|instant pot)\b/}
+ ];
+ if(required.length){checks.forEach(function(check){if(required.some(function(x){return x.toLowerCase()===check.name.toLowerCase()})&&!equipment.includes(check.name))warnings.push("This recipe lists "+check.name+" as required, but it is not in your equipment profile")})}
+ else if(equipment.length){checks.forEach(function(check){if(check.pattern.test(source)&&!equipment.includes(check.name))warnings.push("The instructions may need "+check.name+", which is not in your equipment profile")})}
+ if(equipment.includes("No full kitchen")&&!equipment.includes("Stovetop")&&!equipment.includes("Hot plate")&&!equipment.includes("Microwave")&&!equipment.includes("Air fryer")&&!equipment.includes("Electric kettle"))warnings.push("Your profile says you do not have a full kitchen; check the equipment needed before starting");
+ return warnings;
+}
 async function refreshCommunity(){
  ensureCommunitySection();
  try{var d=await api("/api/community/recipes");communityData=d.recipes||{};communityLoaded=true;renderCommunityCards()}
  catch(e){var box=$("cbCommunityGrid");if(box)box.innerHTML='<div class="cbEmptyState">Community favorites are temporarily unavailable. You can still browse recipes and add your own ratings.</div>'}
 }
+window.loadAdminReviews=async function(){
+ var host=$("adminReviewsList");if(!host)return;
+ host.innerHTML='<div class="status">Loading customer reviews…</div>';
+ try{
+  var data=await api("/api/admin/reviews"),rows=data.reviews||[];
+  if(!rows.length){host.innerHTML='<div class="cbEmptyState">No customer reviews have been submitted yet.</div>';return}
+  host.innerHTML='<div class="cbAdminReviewList">'+rows.map(function(r){
+   var recipe=recipes[r.recipeId],name=recipe?recipe.name:r.recipeId,date=r.createdAt?new Date(r.createdAt).toLocaleString():"Date unavailable";
+   return '<article class="cbAdminReview"><div class="cbAdminReviewHead"><div><strong>'+esc(name)+'</strong><div class="muted">'+esc(r.reviewer||"Customer")+' · '+esc(date)+'</div></div><strong class="cbRatingLine">'+stars(r.rating)+'</strong></div><p>'+(String(r.review||"").trim()?esc(r.review):'<span class="muted">Rating only — no written comment.</span>')+'</p></article>';
+  }).join("")+'</div>';
+ }catch(e){host.innerHTML='<div class="status err">'+esc(e.message||"Could not load reviews.")+'</div>'}
+};
 function renderCommunityCards(){
  var box=$("cbCommunityGrid");if(!box||typeof recipeSortList!=="function")return;
  var all=recipeSortList().filter(function(r){return !String(r.id).startsWith("combo_")});
@@ -293,6 +335,8 @@ function decorateRecipePage(recipeId){
  var reviewRows=(data.reviews||[]).filter(function(x){return String(x.review||"").trim()});
  var reviewList=reviewRows.length?'<div class="cbReviewList"><h3>What cooks are saying</h3>'+reviewRows.map(function(x){return '<article class="cbReviewQuote"><div class="cbRatingLine">'+stars(x.rating)+' <small>'+esc(x.reviewer||"Community cook")+' · '+(x.createdAt?esc(new Date(x.createdAt).toLocaleDateString()):"")+'</small></div><p>'+esc(x.review)+'</p></article>'}).join("")+'</div>':'<p class="cbNoReviews">No written reviews yet. Your review can help the next cook.</p>';
  panel.innerHTML='<div class="cbRecipeCommunityHead"><div><h2>Community feedback</h2><div class="cbRatingLine">'+stars(avg)+' <small>'+(count?avg.toFixed(1)+' · '+count+' ratings':'Be the first to rate this recipe')+'</small></div></div><button class="btn secondary cbFavoriteBtn" type="button" id="cbRecipeFavorite">'+(isFav?'♥ Saved to favorites':'♡ Save to favorites')+'</button></div><div class="cbCommunitySmall">'+(data.favorites||0)+' cooks saved this recipe.</div>'+reviewList+'<div class="cbReviewForm"><div class="field"><label for="cbRatingValue">Your rating</label><select id="cbRatingValue"><option value="5">5 stars — Loved it</option><option value="4">4 stars — Really good</option><option value="3">3 stars — Good</option><option value="2">2 stars — Not for me</option><option value="1">1 star — Needs work</option></select></div><div class="field"><label for="cbReviewText">Review (optional)</label><textarea id="cbReviewText" maxlength="500" placeholder="What did you think of this recipe?"></textarea></div><button class="btn primary" type="button" id="cbSubmitReview">Submit review</button></div>';
+ var warnings=recipePreferenceWarnings(recipes[recipeId]||{});
+ if(warnings.length){var warning=document.createElement("div");warning.className="cbPreferenceWarning";warning.innerHTML='<strong>Check this recipe against your preferences</strong><ul>'+warnings.map(function(x){return '<li>'+esc(x)+'</li>'}).join("")+'</ul><small>These are best-effort ingredient and equipment checks. Review the complete ingredient list and instructions before cooking.</small>';grid.insertBefore(warning,grid.firstChild)}
  grid.appendChild(panel);
  $("cbRecipeFavorite")?.addEventListener("click",function(){toggleCommunityFavorite(recipeId)});
  $("cbSubmitReview")?.addEventListener("click",function(){submitCommunityRating(recipeId)});
@@ -597,4 +641,16 @@ document.addEventListener("click",function(e){
  var open=e.target.closest("[data-community-open]");if(open)window.openRecipePage(open.dataset.communityOpen);
  var favorite=e.target.closest("[data-community-fav]");if(favorite)toggleCommunityFavorite(favorite.dataset.communityFav);
 });
+function renderGroceryPairing(){
+ var host=$("results");if(!host||!groceryResults.length||!recipes[selectedRecipe]){ $("cbGroceryPairing")?.remove();return}
+ var base=recipes[selectedRecipe],baseNames=(base.ingredients||[]).map(function(x){return String(Array.isArray(x)?x[0]:x.name||"").toLowerCase().replace(/[^a-z0-9]+/g," ").trim()}).filter(Boolean);
+ var candidates=Object.values(recipes).filter(function(r){return r.id!==base.id&&!String(r.id).startsWith("combo_")&&r.visible!==false}).map(function(r){var names=(r.ingredients||[]).map(function(x){return String(Array.isArray(x)?x[0]:x.name||"").toLowerCase().replace(/[^a-z0-9]+/g," ").trim()}).filter(Boolean);var shared=names.filter(function(x){return baseNames.some(function(y){return x===y||x.includes(y)||y.includes(x)})});return{recipe:r,shared:[...new Set(shared)]}}).filter(function(x){return x.shared.length>=2}).sort(function(a,b){return b.shared.length-a.shared.length});
+ var best=candidates[0];var old=$("cbGroceryPairing");if(old)old.remove();if(!best)return;
+ var card=document.createElement("section");card.id="cbGroceryPairing";card.className="cbGroceryPairing";
+ card.innerHTML='<div class="eyebrow">A SMART SECOND MEAL</div><h3>Make your groceries go further</h3><div class="cbGroceryPairingBody"><img src="'+esc(best.recipe.img||"")+'" alt="'+esc(best.recipe.name)+'"><div><strong>'+esc(best.recipe.name)+'</strong><p>This recipe shares '+best.shared.length+' ingredients with '+esc(base.name)+': '+best.shared.slice(0,4).map(esc).join(", ")+'. Build one combined grocery list to reduce duplicate shopping.</p><button type="button" class="btn primary" id="cbBuildPairing">Build both meals together</button></div></div>';
+ host.appendChild(card);
+ $("cbBuildPairing")?.addEventListener("click",function(){var combo=makeComboRecipe(base,best.recipe);recipes[combo.id]=combo;window.openRecipePage(combo.id)});
+}
+var baseRenderResults=window.renderResults;
+if(typeof baseRenderResults==="function")window.renderResults=function(){baseRenderResults();renderGroceryPairing()};
 })();
