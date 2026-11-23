@@ -6,6 +6,7 @@ on:
   pull_request:
     branches:
       - cook-better-major-update
+  workflow_dispatch:
 jobs:
   syntax:
     runs-on: ubuntu-latest
@@ -18,3 +19,17 @@ jobs:
         run: |
           node --check api/index.js
           node --check assets/major-update.js
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const html = fs.readFileSync('index.html', 'utf8');
+          const scripts = [...html.matchAll(/<script\\b[^>]*>([\\s\\S]*?)<\\/script>/gi)]
+            .map(match => match[1])
+            .filter(source => source.trim());
+          if (!scripts.length) throw new Error('No inline JavaScript found in index.html');
+          scripts.forEach((source, index) => {
+            const file = '/tmp/cook-better-inline-' + index + '.js';
+            fs.writeFileSync(file, source);
+            console.log('Extracted inline script', index + 1, 'to', file);
+          });
+          NODE
+          for script in /tmp/cook-better-inline-*.js; do node --check "$script"; done
